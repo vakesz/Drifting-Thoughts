@@ -1,0 +1,105 @@
+name: DriftingThoughts
+
+# ============================================
+# VERSION & IDENTITY
+# ============================================
+version: &version 1.0.0
+buildNumber: &buildNumber 1
+bundleId: &bundleId com.vakesz.driftingthoughts
+
+# ============================================
+# PROJECT OPTIONS
+# ============================================
+options:
+  deploymentTarget:
+    iOS: 18.0
+  groupSortPosition: top
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+# ============================================
+# BUILD CONFIGURATIONS
+# ============================================
+configs:
+  Debug: debug
+  Release: release
+
+fileGroups:
+  - .swiftlint.yml
+  - .gitignore
+  - Makefile
+  - project.yml
+  - README.md
+
+# ============================================
+# PROJECT-WIDE BUILD SETTINGS
+# ============================================
+settings:
+  # Swift Language
+  SWIFT_VERSION: 6.0
+  SWIFT_STRICT_CONCURRENCY: complete
+
+  # Platform
+  TARGETED_DEVICE_FAMILY: "1"
+
+  # Code Quality
+  GCC_TREAT_WARNINGS_AS_ERRORS: YES
+  SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+  DEAD_CODE_STRIPPING: YES
+
+  # Modern Xcode Features
+  ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
+  GENERATE_INFOPLIST_FILE: YES
+
+  configs:
+    Debug:
+      ONLY_ACTIVE_ARCH: YES
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+      ENABLE_TESTABILITY: YES
+      SWIFT_COMPILATION_MODE: singlefile
+      SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+      DEBUG_INFORMATION_FORMAT: dwarf
+
+    Release:
+      ONLY_ACTIVE_ARCH: NO
+      SWIFT_COMPILATION_MODE: wholemodule
+      SWIFT_OPTIMIZATION_LEVEL: "-O"
+      DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+      COPY_PHASE_STRIP: YES
+      STRIP_INSTALLED_PRODUCT: YES
+      VALIDATE_PRODUCT: YES
+
+# ============================================
+# TARGETS
+# ============================================
+targets:
+  # ==========================================
+  # MAIN APPLICATION TARGET
+  # ==========================================
+  DriftingThoughts:
+    type: application
+    platform: iOS
+
+    sources:
+      - path: App
+      - path: Core
+      - path: Features
+      - path: Resources
+      - path: Supporting
+
+    settings:
+      base:
+        PRODUCT_NAME: DriftingThoughts
+        PRODUCT_BUNDLE_IDENTIFIER: *bundleId
+        MARKETING_VERSION: *version
+        CURRENT_PROJECT_VERSION: *buildNumber
+        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_STYLE: Automatic
+        INFOPLIST_KEY_CFBundleDisplayName: "Drifting Thoughts"
+        INFOPLIST_KEY_UILaunchScreen_Generation: true
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+
+    info:
+      path: Supporting/Info.plist
+      properties:
+        UILaunchScreen: {}
