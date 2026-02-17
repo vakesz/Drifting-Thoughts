@@ -5,26 +5,23 @@ struct ThoughtRowView: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: DriftLayout.spacingSM) {
-            // Style color dot
             Circle()
                 .fill(thought.style.gradientStartColor)
                 .frame(width: 10, height: 10)
                 .padding(.top, 6)
 
             VStack(alignment: .leading, spacing: DriftLayout.spacingXS) {
-                Text(thought.text)
-                    .font(.body)
+                Text(thought.title.isEmpty ? thought.text : thought.title)
+                    .font(.body.weight(.medium))
                     .foregroundStyle(Color.textPrimary)
                     .lineLimit(2)
 
                 HStack(spacing: DriftLayout.spacingSM) {
-                    if let mood = thought.mood {
-                        Text(mood.emoji)
+                    if !thought.title.isEmpty {
+                        Text(thought.text)
                             .font(.caption)
-                    }
-
-                    if let tag = thought.tag {
-                        TagPillView(tag: tag, style: .compact)
+                            .foregroundStyle(Color.textSecondary)
+                            .lineLimit(1)
                     }
 
                     Spacer()

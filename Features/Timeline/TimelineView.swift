@@ -5,14 +5,14 @@ struct TimelineView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Thought.createdAt, order: .reverse) private var thoughts: [Thought]
     @State private var viewModel = TimelineViewModel()
-    @State private var showSettings = false
+    @State private var isShowingSettings = false
 
     private var filteredThoughts: [Thought] {
         guard !viewModel.searchText.isEmpty else { return thoughts }
         let query = viewModel.searchText.lowercased()
         return thoughts.filter { thought in
             thought.text.lowercased().contains(query) ||
-            (thought.tag?.lowercased().contains(query) ?? false)
+            thought.title.lowercased().contains(query)
         }
     }
 
@@ -28,18 +28,18 @@ struct TimelineView: View {
             .background(Color.backgroundPrimary)
             .navigationTitle("Timeline")
             .navigationBarTitleDisplayMode(.large)
-            .searchable(text: $viewModel.searchText, prompt: "Search thoughts or tags")
+            .searchable(text: $viewModel.searchText, prompt: "Search thoughts")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        showSettings = true
+                        isShowingSettings = true
                     } label: {
                         Image(systemName: "gearshape")
                             .foregroundStyle(Color.textSecondary)
                     }
                 }
             }
-            .navigationDestination(isPresented: $showSettings) {
+            .navigationDestination(isPresented: $isShowingSettings) {
                 SettingsView()
             }
         }
@@ -64,9 +64,8 @@ struct TimelineView: View {
             ForEach(filteredThoughts) { thought in
                 NavigationLink {
                     CardPreviewView(
+                        title: thought.title,
                         text: thought.text,
-                        tag: thought.tag,
-                        moodName: thought.moodName,
                         existingThought: thought,
                     )
                 } label: {

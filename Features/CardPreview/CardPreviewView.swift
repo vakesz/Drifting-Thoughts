@@ -3,91 +3,104 @@ import SwiftUI
 struct CardPreviewView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Bindable private var settings = AppSettings.shared
     @State private var viewModel: CardPreviewViewModel
-    @State private var breathe = false
-    @State private var didSave = false
-    @State private var showCustomize = false
+    @State private var saveFeedbackTrigger = false
+    @State private var isShowingCustomizeSheet = false
+    @State private var shareImageURL: URL?
+    let onSave: (() -> Void)?
+
+    private var isComposePreview: Bool { onSave != nil }
+    private var authorForCard: String? {
+        settings.showAuthorOnCard ? settings.authorName : nil
+    }
+    private var shareContentFingerprint: [String] {
+        [
+            viewModel.selectedStyle.rawValue,
+            viewModel.selectedFontStyle.rawValue,
+            viewModel.textColor.hexString ?? "",
+            viewModel.gradientStart.hexString ?? "",
+            viewModel.gradientEnd.hexString ?? "",
+        ]
+    }
 
     init(
+        title: String,
         text: String,
-        tag: String?,
-        moodName: String? = nil,
         existingThought: Thought? = nil,
+        onSave: (() -> Void)? = nil,
     ) {
         _viewModel = State(initialValue: CardPreviewViewModel(
+            title: title,
             text: text,
-            tag: tag,
-            moodName: moodName,
             existingThought: existingThought,
         ))
+        self.onSave = onSave
     }
 
     var body: some View {
         VStack(spacing: DriftLayout.spacingLG) {
-            Spacer()
-
             CardView(
                 thought: viewModel.makeThoughtForPreview(),
                 style: viewModel.selectedStyle,
-                showWatermark: AppSettings.shared.showWatermark,
+                showWatermark: settings.showWatermark,
+                authorName: authorForCard,
+                customFontStyle: viewModel.selectedFontStyle,
                 customTextColor: viewModel.textColor,
                 customMeshColors: viewModel.customMeshColors,
-                customTagPosition: viewModel.tagPosition,
             )
-            .scaleEffect(breathe ? 1.02 : 1.0)
             .shadow(color: .cardShadow, radius: 20, y: 10)
             .padding(.horizontal, DriftLayout.spacingXL)
             .animation(.easeInOut(duration: 0.3), value: viewModel.selectedStyle)
+            .padding(.top, DriftLayout.spacingMD)
 
-            Spacer()
+            if isComposePreview {
+                CardStylePicker(selectedStyle: $viewModel.selectedStyle)
+            }
 
-            CardStylePicker(selectedStyle: $viewModel.selectedStyle)
-
-            customizeToggle
-                .padding(.bottom, DriftLayout.spacingMD)
+            Spacer(minLength: DriftLayout.spacingSM)
         }
         .background(Color.backgroundPrimary)
         .navigationTitle("Preview")
         .navigationBarTitleDisplayMode(.inline)
-        .sensoryFeedback(.success, trigger: didSave)
+        .sensoryFeedback(.success, trigger: saveFeedbackTrigger)
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
-                ShareLink(item: viewModel.shareText()) {
-                    Image(systemName: "square.and.arrow.up")
+                if let shareImageURL {
+                    ShareLink(item: shareImageURL) {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    .accessibilityLabel("Share image")
                 }
 
-                Button {
-                    viewModel.save(in: modelContext)
-                    didSave.toggle()
-                    dismiss()
-                } label: {
-                    Image(systemName: "arrow.down.circle")
+                if isComposePreview {
+                    Button("Save") {
+                        saveAndDismiss()
+                    }
+                    .fontWeight(.semibold)
+
+                    Button {
+                        isShowingCustomizeSheet = true
+                    } label: {
+                        Image(systemName: "paintpalette")
+                    }
+                    .accessibilityLabel("Customize")
                 }
             }
         }
-        .sheet(isPresented: $showCustomize) {
+        .sheet(isPresented: $isShowingCustomizeSheet) {
             customizeSheet
         }
         .onAppear {
-            withAnimation(.easeInOut(duration: 3.0).repeatForever(autoreverses: true)) {
-                breathe = true
-            }
+            shareImageURL = viewModel.makeShareURL(
+                showWatermark: settings.showWatermark,
+                authorName: authorForCard,
+            )
+        }
+        .onChange(of: shareContentFingerprint) {
+            updateShareURL()
         }
     }
-
-    // MARK: - Customize Toggle
-
-    private var customizeToggle: some View {
-        Button {
-            showCustomize = true
-        } label: {
-            Label("Customize", systemImage: "paintpalette")
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(Color.brandAccent)
-        }
-    }
-
-    // MARK: - Customize Sheet
 
     private var customizeSheet: some View {
         NavigationStack {
@@ -98,15 +111,12 @@ struct CardPreviewView: View {
                     ColorPicker("Background End", selection: $viewModel.gradientEnd, supportsOpacity: false)
                 }
 
-                Section("Tag Position") {
-                    Picker("Position", selection: $viewModel.tagPosition) {
-                        ForEach(TagPosition.allCases) { position in
-                            Label(position.label, systemImage: position.iconName)
-                                .tag(position)
+                Section("Typography") {
+                    Picker("Font", selection: $viewModel.selectedFontStyle) {
+                        ForEach(CardFontStyle.allCases) { fontStyle in
+                            Text(fontStyle.label).tag(fontStyle)
                         }
                     }
-                    .pickerStyle(.inline)
-                    .labelsHidden()
                 }
             }
             .navigationTitle("Customize Card")
@@ -114,12 +124,26 @@ struct CardPreviewView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
-                        showCustomize = false
+                        isShowingCustomizeSheet = false
                     }
                     .fontWeight(.medium)
                 }
             }
         }
         .presentationDetents([.medium])
+    }
+
+    private func updateShareURL() {
+        shareImageURL = viewModel.makeShareURL(
+            showWatermark: settings.showWatermark,
+            authorName: authorForCard,
+        )
+    }
+
+    private func saveAndDismiss() {
+        viewModel.save(in: modelContext)
+        saveFeedbackTrigger.toggle()
+        onSave?()
+        dismiss()
     }
 }

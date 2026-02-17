@@ -10,5 +10,4 @@ extension Color {
     static let textSecondary = Color("TextSecondary")
     static let textPlaceholder = Color("TextPlaceholder")
     static let cardShadow = Color("CardShadow")
-    static let tagPill = Color("TagPill")
 }

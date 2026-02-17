@@ -1,18 +1,18 @@
 import SwiftUI
 
 struct ComposeView: View {
-    @Environment(\.modelContext) private var modelContext
     @State private var viewModel = ComposeViewModel()
-    @State private var showCardPreview = false
-    @State private var hitCharLimit = false
+    @State private var isShowingCardPreview = false
+    @State private var titleLimitFeedbackTrigger = false
+    @State private var characterLimitFeedbackTrigger = false
     @FocusState private var isTextEditorFocused: Bool
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                titleField
                 textEditor
-
-                bottomBar
+                footer
             }
             .background(Color.backgroundPrimary)
             .navigationTitle("Compose")
@@ -21,21 +21,21 @@ struct ComposeView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         isTextEditorFocused = false
-                        showCardPreview = true
+                        isShowingCardPreview = true
                     } label: {
                         Image(systemName: "eye")
                     }
                     .disabled(!viewModel.canPreview)
                 }
             }
-            .navigationDestination(isPresented: $showCardPreview) {
+            .navigationDestination(isPresented: $isShowingCardPreview) {
                 CardPreviewView(
+                    title: viewModel.title,
                     text: viewModel.text,
-                    tag: viewModel.detectedTag,
+                    onSave: {
+                        viewModel.reset()
+                    },
                 )
-                .onDisappear {
-                    viewModel.reset()
-                }
             }
             .onAppear {
                 if AppSettings.shared.autoOpenKeyboard {
@@ -45,7 +45,23 @@ struct ComposeView: View {
         }
     }
 
-    // MARK: - Text Editor
+    private var titleField: some View {
+        TextField("Title (optional)", text: $viewModel.title)
+            .font(.headline)
+            .foregroundStyle(Color.textPrimary)
+            .padding(.horizontal, DriftLayout.spacingMD)
+            .padding(.top, DriftLayout.spacingSM)
+            .onChange(of: viewModel.title) { _, newValue in
+                let limited = String(newValue.prefix(DriftLayout.maxTitleCount))
+                if limited != newValue {
+                    viewModel.title = limited
+                }
+                if limited.count == DriftLayout.maxTitleCount {
+                    titleLimitFeedbackTrigger = true
+                }
+            }
+            .sensoryFeedback(.warning, trigger: titleLimitFeedbackTrigger)
+    }
 
     private var textEditor: some View {
         ZStack(alignment: .topLeading) {
@@ -59,11 +75,15 @@ struct ComposeView: View {
                 .padding(.horizontal, DriftLayout.spacingMD)
                 .padding(.top, DriftLayout.spacingSM)
                 .onChange(of: viewModel.text) { _, newValue in
-                    if newValue.count == DriftLayout.maxCharacterCount {
-                        hitCharLimit = true
+                    let limited = String(newValue.prefix(DriftLayout.maxCharacterCount))
+                    if limited != newValue {
+                        viewModel.text = limited
+                    }
+                    if limited.count == DriftLayout.maxCharacterCount {
+                        characterLimitFeedbackTrigger = true
                     }
                 }
-                .sensoryFeedback(.warning, trigger: hitCharLimit)
+                .sensoryFeedback(.warning, trigger: characterLimitFeedbackTrigger)
 
             if viewModel.text.isEmpty {
                 Text("let a thought drift...")
@@ -77,15 +97,15 @@ struct ComposeView: View {
         .frame(maxHeight: .infinity)
     }
 
-    // MARK: - Bottom Bar
-
-    private var bottomBar: some View {
+    private var footer: some View {
         HStack {
+            Text("\(viewModel.title.count)/\(DriftLayout.maxTitleCount)")
+                .font(.caption)
+                .foregroundStyle(Color.textSecondary)
             Spacer()
-
-            if let tag = viewModel.detectedTag {
-                TagPillView(tag: tag)
-            }
+            Text("\(viewModel.text.count)/\(DriftLayout.maxCharacterCount)")
+                .font(.caption)
+                .foregroundStyle(Color.textSecondary)
         }
         .padding(.horizontal, DriftLayout.spacingMD)
         .padding(.vertical, DriftLayout.spacingSM)

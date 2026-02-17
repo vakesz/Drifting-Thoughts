@@ -7,6 +7,7 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            profileSection
             writingSection
             cardsSection
             dataSection
@@ -17,6 +18,18 @@ struct SettingsView: View {
     }
 
     // MARK: - Writing
+
+    private var profileSection: some View {
+        Section("Profile") {
+            TextField("Author name", text: $settings.authorName)
+                .textInputAutocapitalization(.words)
+                .onChange(of: settings.authorName) { _, newValue in
+                    settings.authorName = String(newValue.prefix(DriftLayout.maxAuthorNameCount))
+                }
+
+            Toggle("Show author on cards", isOn: $settings.showAuthorOnCard)
+        }
+    }
 
     private var writingSection: some View {
         Section("Writing") {

@@ -1,3 +1,4 @@
+import Foundation
 import SwiftData
 import SwiftUI
 
@@ -8,46 +9,53 @@ final class CardPreviewViewModel {
         didSet { syncColorsFromStyle() }
     }
 
+    let title: String
     let text: String
-    let tag: String?
-    let moodName: String?
 
     // MARK: - Custom Colors
 
     var textColor: Color
     var gradientStart: Color
     var gradientEnd: Color
-    var tagPosition: TagPosition = .bottomTrailing
+    var selectedFontStyle: CardFontStyle
 
     /// When editing an existing thought, holds a reference
     var existingThought: Thought?
 
     init(
+        title: String,
         text: String,
-        tag: String?,
-        moodName: String?,
         existingThought: Thought? = nil,
     ) {
+        self.title = title
         self.text = text
-        self.tag = tag
-        self.moodName = moodName
         self.existingThought = existingThought
         let style = existingThought?.style ?? AppSettings.shared.defaultStyle
         self.selectedStyle = style
-        self.textColor = style.textColor
-        self.gradientStart = style.gradientStartColor
-        self.gradientEnd = style.gradientEndColor
+        self.textColor = Color(hex: existingThought?.textColorHex ?? "") ?? style.textColor
+        self.gradientStart = Color(hex: existingThought?.gradientStartHex ?? "") ?? style.gradientStartColor
+        self.gradientEnd = Color(hex: existingThought?.gradientEndHex ?? "") ?? style.gradientEndColor
+        self.selectedFontStyle = existingThought?.fontStyle ?? .serif
     }
 
     func save(in context: ModelContext) {
         if let existing = existingThought {
+            existing.title = title
+            existing.text = text
             existing.styleName = selectedStyle.rawValue
+            existing.fontStyleName = selectedFontStyle.rawValue
+            existing.textColorHex = textColor.hexString
+            existing.gradientStartHex = gradientStart.hexString
+            existing.gradientEndHex = gradientEnd.hexString
         } else {
             let thought = Thought(
+                title: title,
                 text: text,
                 styleName: selectedStyle.rawValue,
-                tag: tag,
-                moodName: moodName,
+                fontStyleName: selectedFontStyle.rawValue,
+                textColorHex: textColor.hexString,
+                gradientStartHex: gradientStart.hexString,
+                gradientEndHex: gradientEnd.hexString,
             )
             context.insert(thought)
         }
@@ -58,10 +66,13 @@ final class CardPreviewViewModel {
             return existing
         }
         return Thought(
+            title: title,
             text: text,
             styleName: selectedStyle.rawValue,
-            tag: tag,
-            moodName: moodName,
+            fontStyleName: selectedFontStyle.rawValue,
+            textColorHex: textColor.hexString,
+            gradientStartHex: gradientStart.hexString,
+            gradientEndHex: gradientEnd.hexString,
         )
     }
 
@@ -73,16 +84,34 @@ final class CardPreviewViewModel {
         ]
     }
 
-    /// Build a plain-text version for sharing
-    func shareText() -> String {
-        var parts: [String] = [text]
-        if let moodName, let mood = Mood(rawValue: moodName) {
-            parts.append(mood.emoji)
+    func makeShareURL(showWatermark: Bool, authorName: String?) -> URL? {
+        let exportView = CardView(
+            thought: makeThoughtForPreview(),
+            style: selectedStyle,
+            showWatermark: showWatermark,
+            authorName: authorName,
+            customFontStyle: selectedFontStyle,
+            customTextColor: textColor,
+            customMeshColors: customMeshColors,
+        )
+
+        let renderer = ImageRenderer(content: exportView.frame(width: 1080, height: 1350))
+        renderer.scale = 3
+
+        guard let uiImage = renderer.uiImage,
+              let data = uiImage.pngData()
+        else {
+            return nil
         }
-        if let tag {
-            parts.append("#\(tag)")
+
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("drifting-thought-\(UUID().uuidString).png")
+        do {
+            try data.write(to: url, options: .atomic)
+            return url
+        } catch {
+            return nil
         }
-        return parts.joined(separator: " ")
     }
 
     // MARK: - Private

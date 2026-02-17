@@ -21,5 +21,6 @@ enum DriftLayout {
     // MARK: - Text
 
     static let maxCharacterCount = 500
-    static let maxTagLength = 20
+    static let maxTitleCount = 50
+    static let maxAuthorNameCount = 50
 }
