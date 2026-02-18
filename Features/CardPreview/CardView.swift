@@ -3,51 +3,54 @@ import SwiftUI
 struct CardView: View {
     let thought: Thought
     let style: CardStyle
-    var showWatermark: Bool = true
-    var authorName: String?
+    var themeOverrides: CardThemeOverrides?
+    var settings: AppSettings = .shared
 
-    // MARK: - Custom Overrides
-
-    var customFontStyle: CardFontStyle?
-    var customTextColor: Color?
-    var customMeshColors: [Color]?
-
-    private var resolvedTextColor: Color { customTextColor ?? style.textColor }
-    private var resolvedMeshColors: [Color] { customMeshColors ?? style.meshColors }
-    private var resolvedFont: Font { (customFontStyle ?? thought.fontStyle).font }
-    private var resolvedAuthor: String? {
-        guard let authorName else { return nil }
-        let trimmed = authorName.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? nil : trimmed
+    private var resolvedTheme: ResolvedCardTheme {
+        CardThemeResolver.resolve(
+            thought: thought,
+            style: style,
+            settings: settings,
+            themeOverrides: themeOverrides,
+        )
+    }
+    private var bodyFont: Font { resolvedTheme.bodyFontStyle.font }
+    private var horizontalTextPadding: CGFloat {
+        DriftLayout.spacingXL * CGFloat(resolvedTheme.textPaddingScale)
     }
 
     var body: some View {
         ZStack {
-            MeshGradient.uniform3x3(colors: resolvedMeshColors)
+            MeshGradient.uniform3x3(colors: resolvedTheme.meshGradientColors)
 
-            VStack {
-                Spacer()
+            VStack(spacing: 0) {
+                contentTopSpacer
 
                 Text(thought.text)
-                    .font(resolvedFont)
-                    .foregroundStyle(resolvedTextColor)
+                    .font(bodyFont)
+                    .foregroundStyle(resolvedTheme.bodyTextColor)
+                    .lineSpacing(resolvedTheme.lineSpacing)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, DriftLayout.spacingXL)
+                    .padding(.horizontal, horizontalTextPadding)
 
-                Spacer()
+                contentBottomSpacer
 
-                if showWatermark || resolvedAuthor != nil {
+                if resolvedTheme.showWatermark || resolvedTheme.showAuthor {
                     VStack(spacing: DriftLayout.spacingXS) {
-                        if let resolvedAuthor {
-                            Text("- \(resolvedAuthor)")
+                        if let authorName = resolvedTheme.authorName, resolvedTheme.showAuthor {
+                            Text("- \(authorName)")
                                 .font(.caption)
-                                .foregroundStyle(resolvedTextColor.opacity(0.5))
+                                .foregroundStyle(
+                                    resolvedTheme.authorTextColor.opacity(resolvedTheme.authorTextOpacity)
+                                )
                         }
 
-                        if showWatermark {
-                            Text("drifting thoughts")
+                        if resolvedTheme.showWatermark {
+                            Text(resolvedTheme.watermarkText)
                                 .font(.caption2)
-                                .foregroundStyle(resolvedTextColor.opacity(0.25))
+                                .foregroundStyle(
+                                    resolvedTheme.watermarkTextColor.opacity(resolvedTheme.watermarkTextOpacity)
+                                )
                         }
                     }
                     .padding(.bottom, DriftLayout.spacingMD)
@@ -56,5 +59,31 @@ struct CardView: View {
         }
         .aspectRatio(DriftLayout.cardAspectRatio, contentMode: .fit)
         .clipShape(RoundedRectangle(cornerRadius: DriftLayout.cornerRadiusLG))
+    }
+
+    @ViewBuilder
+    private var contentTopSpacer: some View {
+        switch resolvedTheme.contentAlignment {
+        case .top:
+            EmptyView()
+        case .center:
+            Spacer()
+        case .bottom:
+            Spacer()
+            Spacer()
+        }
+    }
+
+    @ViewBuilder
+    private var contentBottomSpacer: some View {
+        switch resolvedTheme.contentAlignment {
+        case .top:
+            Spacer()
+            Spacer()
+        case .center:
+            Spacer()
+        case .bottom:
+            EmptyView()
+        }
     }
 }

@@ -6,20 +6,12 @@ import SwiftUI
 @Observable
 final class CardPreviewViewModel {
     var selectedStyle: CardStyle {
-        didSet { syncColorsFromStyle() }
+        didSet { resetThemeToStyleDefaults() }
     }
 
     let title: String
     let text: String
-
-    // MARK: - Custom Colors
-
-    var textColor: Color
-    var gradientStart: Color
-    var gradientEnd: Color
-    var selectedFontStyle: CardFontStyle
-
-    /// When editing an existing thought, holds a reference
+    var draftThemeOverrides: CardThemeOverrides
     var existingThought: Thought?
 
     init(
@@ -32,10 +24,90 @@ final class CardPreviewViewModel {
         self.existingThought = existingThought
         let style = existingThought?.style ?? AppSettings.shared.defaultStyle
         self.selectedStyle = style
-        self.textColor = Color(hex: existingThought?.textColorHex ?? "") ?? style.textColor
-        self.gradientStart = Color(hex: existingThought?.gradientStartHex ?? "") ?? style.gradientStartColor
-        self.gradientEnd = Color(hex: existingThought?.gradientEndHex ?? "") ?? style.gradientEndColor
-        self.selectedFontStyle = existingThought?.fontStyle ?? .serif
+        self.draftThemeOverrides = existingThought?.themeOverrides ?? CardThemeOverrides()
+    }
+
+    var bodyTextColor: Color {
+        get { colorOverride(\.bodyTextColorHex, default: selectedStyle.textColor) }
+        set { setColorOverride(\.bodyTextColorHex, newValue: newValue, default: selectedStyle.textColor) }
+    }
+
+    var backgroundGradientStart: Color {
+        get { colorOverride(\.backgroundGradientStartHex, default: selectedStyle.gradientStartColor) }
+        set { setColorOverride(\.backgroundGradientStartHex, newValue: newValue, default: selectedStyle.gradientStartColor) }
+    }
+
+    var backgroundGradientEnd: Color {
+        get { colorOverride(\.backgroundGradientEndHex, default: selectedStyle.gradientEndColor) }
+        set { setColorOverride(\.backgroundGradientEndHex, newValue: newValue, default: selectedStyle.gradientEndColor) }
+    }
+
+    var authorTextColor: Color {
+        get { colorOverride(\.authorTextColorHex, default: selectedStyle.textColor) }
+        set { setColorOverride(\.authorTextColorHex, newValue: newValue, default: selectedStyle.textColor) }
+    }
+
+    var watermarkTextColor: Color {
+        get { colorOverride(\.watermarkTextColorHex, default: selectedStyle.textColor) }
+        set { setColorOverride(\.watermarkTextColorHex, newValue: newValue, default: selectedStyle.textColor) }
+    }
+
+    var bodyFontStyle: CardFontStyle {
+        get { CardFontStyle(rawValue: draftThemeOverrides.bodyFontStyleName ?? "") ?? .serif }
+        set { draftThemeOverrides.bodyFontStyleName = newValue.rawValue }
+    }
+
+    var showsAuthor: Bool {
+        get { draftThemeOverrides.showAuthorOverride ?? AppSettings.shared.showAuthorOnCard }
+        set {
+            draftThemeOverrides.showAuthorOverride = (newValue == AppSettings.shared.showAuthorOnCard)
+                ? nil : newValue
+        }
+    }
+
+    var showsWatermark: Bool {
+        get { draftThemeOverrides.showWatermarkOverride ?? AppSettings.shared.showWatermark }
+        set {
+            draftThemeOverrides.showWatermarkOverride = (newValue == AppSettings.shared.showWatermark)
+                ? nil : newValue
+        }
+    }
+
+    var watermarkText: String {
+        get { draftThemeOverrides.watermarkTextOverride ?? CardThemeResolver.defaultWatermarkText }
+        set {
+            let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            draftThemeOverrides.watermarkTextOverride = (trimmed.isEmpty || trimmed == CardThemeResolver.defaultWatermarkText)
+                ? nil : trimmed
+        }
+    }
+
+    var authorTextOpacity: Double {
+        get { draftThemeOverrides.authorTextOpacity ?? CardThemeOverrides.defaultAuthorTextOpacity }
+        set {
+            let clamped = min(max(newValue, 0), 1)
+            let isDefault = abs(clamped - CardThemeOverrides.defaultAuthorTextOpacity) < .ulpOfOne
+            draftThemeOverrides.authorTextOpacity = isDefault ? nil : clamped
+        }
+    }
+
+    var watermarkTextOpacity: Double {
+        get { draftThemeOverrides.watermarkTextOpacity ?? CardThemeOverrides.defaultWatermarkTextOpacity }
+        set {
+            let clamped = min(max(newValue, 0), 1)
+            let isDefault = abs(clamped - CardThemeOverrides.defaultWatermarkTextOpacity) < .ulpOfOne
+            draftThemeOverrides.watermarkTextOpacity = isDefault ? nil : clamped
+        }
+    }
+
+    var themeOverridesSnapshot: String {
+        guard let normalized = draftThemeOverrides.persistableSnapshot(),
+              let data = try? JSONEncoder().encode(normalized),
+              let encoded = String(data: data, encoding: .utf8)
+        else {
+            return "none"
+        }
+        return encoded
     }
 
     func save(in context: ModelContext) {
@@ -43,20 +115,14 @@ final class CardPreviewViewModel {
             existing.title = title
             existing.text = text
             existing.styleName = selectedStyle.rawValue
-            existing.fontStyleName = selectedFontStyle.rawValue
-            existing.textColorHex = textColor.hexString
-            existing.gradientStartHex = gradientStart.hexString
-            existing.gradientEndHex = gradientEnd.hexString
+            existing.themeOverrides = draftThemeOverrides
         } else {
             let thought = Thought(
                 title: title,
                 text: text,
                 styleName: selectedStyle.rawValue,
-                fontStyleName: selectedFontStyle.rawValue,
-                textColorHex: textColor.hexString,
-                gradientStartHex: gradientStart.hexString,
-                gradientEndHex: gradientEnd.hexString,
             )
+            thought.themeOverrides = draftThemeOverrides
             context.insert(thought)
         }
     }
@@ -65,34 +131,21 @@ final class CardPreviewViewModel {
         if let existing = existingThought {
             return existing
         }
-        return Thought(
+        let previewThought = Thought(
             title: title,
             text: text,
             styleName: selectedStyle.rawValue,
-            fontStyleName: selectedFontStyle.rawValue,
-            textColorHex: textColor.hexString,
-            gradientStartHex: gradientStart.hexString,
-            gradientEndHex: gradientEnd.hexString,
         )
+        previewThought.themeOverrides = draftThemeOverrides
+        return previewThought
     }
 
-    var customMeshColors: [Color] {
-        [
-            gradientStart, gradientStart, gradientEnd,
-            gradientStart, gradientEnd, gradientEnd,
-            gradientEnd, gradientEnd, gradientStart,
-        ]
-    }
-
-    func makeShareURL(showWatermark: Bool, authorName: String?) -> URL? {
+    func makeShareURL(settings: AppSettings) -> URL? {
         let exportView = CardView(
             thought: makeThoughtForPreview(),
             style: selectedStyle,
-            showWatermark: showWatermark,
-            authorName: authorName,
-            customFontStyle: selectedFontStyle,
-            customTextColor: textColor,
-            customMeshColors: customMeshColors,
+            themeOverrides: draftThemeOverrides,
+            settings: settings,
         )
 
         let renderer = ImageRenderer(content: exportView.frame(width: 1080, height: 1350))
@@ -116,9 +169,27 @@ final class CardPreviewViewModel {
 
     // MARK: - Private
 
-    private func syncColorsFromStyle() {
-        textColor = selectedStyle.textColor
-        gradientStart = selectedStyle.gradientStartColor
-        gradientEnd = selectedStyle.gradientEndColor
+    private func colorOverride(
+        _ keyPath: KeyPath<CardThemeOverrides, String?>,
+        default fallback: Color
+    ) -> Color {
+        Color(rgbHex: draftThemeOverrides[keyPath: keyPath] ?? "") ?? fallback
+    }
+
+    private func setColorOverride(
+        _ keyPath: WritableKeyPath<CardThemeOverrides, String?>,
+        newValue: Color,
+        default fallback: Color
+    ) {
+        let hex = newValue.rgbHexString
+        draftThemeOverrides[keyPath: keyPath] = (hex == fallback.rgbHexString) ? nil : hex
+    }
+
+    private func resetThemeToStyleDefaults() {
+        draftThemeOverrides.bodyTextColorHex = nil
+        draftThemeOverrides.authorTextColorHex = nil
+        draftThemeOverrides.watermarkTextColorHex = nil
+        draftThemeOverrides.backgroundGradientStartHex = nil
+        draftThemeOverrides.backgroundGradientEndHex = nil
     }
 }

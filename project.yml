@@ -97,6 +97,7 @@ targets:
         CODE_SIGN_STYLE: Automatic
         INFOPLIST_KEY_CFBundleDisplayName: "Drifting Thoughts"
         INFOPLIST_KEY_UILaunchScreen_Generation: true
+        INFOPLIST_KEY_UIRequiresFullScreen: true
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
 
     info:

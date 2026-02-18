@@ -1,9 +1,24 @@
 import SwiftUI
+import UIKit
+
+/// Shared hex-color string utilities used by `Color` extensions and `CardThemeOverrides`.
+enum RGBHex {
+    /// Strips non-alphanumeric characters, uppercases, and validates a 6-digit hex string.
+    /// Returns `nil` for `nil` input or invalid strings.
+    static func normalized(_ input: String?) -> String? {
+        guard let input else { return nil }
+        let cleaned = input.trimmingCharacters(in: CharacterSet.alphanumerics.inverted).uppercased()
+        guard cleaned.count == 6, UInt64(cleaned, radix: 16) != nil else { return nil }
+        return cleaned
+    }
+}
 
 extension Color {
-    init?(hex: String) {
-        let cleaned = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        guard cleaned.count == 6, let rgb = UInt64(cleaned, radix: 16) else {
+    /// Initializes a color from a 6-digit RGB hex string (e.g. `#A1B2C3` or `A1B2C3`).
+    init?(rgbHex: String) {
+        guard let cleaned = RGBHex.normalized(rgbHex),
+              let rgb = UInt64(cleaned, radix: 16)
+        else {
             return nil
         }
 
@@ -13,27 +28,15 @@ extension Color {
         self = Color(red: red, green: green, blue: blue)
     }
 
-    var hexString: String? {
-        guard let cgColor = self.cgColor,
-              let components = cgColor.components
+    /// Serializes the color to a 6-digit RGB uppercase hex string.
+    var rgbHexString: String? {
+        var red: CGFloat = .zero
+        var green: CGFloat = .zero
+        var blue: CGFloat = .zero
+        var alpha: CGFloat = .zero
+
+        guard UIColor(self).getRed(&red, green: &green, blue: &blue, alpha: &alpha)
         else {
-            return nil
-        }
-
-        let red: CGFloat
-        let green: CGFloat
-        let blue: CGFloat
-
-        switch components.count {
-        case 2:
-            red = components[0]
-            green = components[0]
-            blue = components[0]
-        case 3, 4:
-            red = components[0]
-            green = components[1]
-            blue = components[2]
-        default:
             return nil
         }
 

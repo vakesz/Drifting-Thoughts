@@ -11,16 +11,13 @@ struct CardPreviewView: View {
     let onSave: (() -> Void)?
 
     private var isComposePreview: Bool { onSave != nil }
-    private var authorForCard: String? {
-        settings.showAuthorOnCard ? settings.authorName : nil
-    }
-    private var shareContentFingerprint: [String] {
+    private var shareContentSnapshot: [String] {
         [
             viewModel.selectedStyle.rawValue,
-            viewModel.selectedFontStyle.rawValue,
-            viewModel.textColor.hexString ?? "",
-            viewModel.gradientStart.hexString ?? "",
-            viewModel.gradientEnd.hexString ?? "",
+            viewModel.themeOverridesSnapshot,
+            settings.authorName,
+            String(settings.showAuthorOnCard),
+            String(settings.showWatermark),
         ]
     }
 
@@ -43,11 +40,8 @@ struct CardPreviewView: View {
             CardView(
                 thought: viewModel.makeThoughtForPreview(),
                 style: viewModel.selectedStyle,
-                showWatermark: settings.showWatermark,
-                authorName: authorForCard,
-                customFontStyle: viewModel.selectedFontStyle,
-                customTextColor: viewModel.textColor,
-                customMeshColors: viewModel.customMeshColors,
+                themeOverrides: viewModel.draftThemeOverrides,
+                settings: settings,
             )
             .shadow(color: .cardShadow, radius: 20, y: 10)
             .padding(.horizontal, DriftLayout.spacingXL)
@@ -92,12 +86,9 @@ struct CardPreviewView: View {
             customizeSheet
         }
         .onAppear {
-            shareImageURL = viewModel.makeShareURL(
-                showWatermark: settings.showWatermark,
-                authorName: authorForCard,
-            )
+            shareImageURL = viewModel.makeShareURL(settings: settings)
         }
-        .onChange(of: shareContentFingerprint) {
+        .onChange(of: shareContentSnapshot) {
             updateShareURL()
         }
     }
@@ -106,16 +97,32 @@ struct CardPreviewView: View {
         NavigationStack {
             Form {
                 Section("Colors") {
-                    ColorPicker("Text", selection: $viewModel.textColor, supportsOpacity: false)
-                    ColorPicker("Background Start", selection: $viewModel.gradientStart, supportsOpacity: false)
-                    ColorPicker("Background End", selection: $viewModel.gradientEnd, supportsOpacity: false)
+                    ColorPicker("Body Text", selection: $viewModel.bodyTextColor, supportsOpacity: false)
+                    ColorPicker("Background Start", selection: $viewModel.backgroundGradientStart, supportsOpacity: false)
+                    ColorPicker("Background End", selection: $viewModel.backgroundGradientEnd, supportsOpacity: false)
+                    ColorPicker("Author Text", selection: $viewModel.authorTextColor, supportsOpacity: false)
+                    ColorPicker("Watermark Text", selection: $viewModel.watermarkTextColor, supportsOpacity: false)
                 }
 
                 Section("Typography") {
-                    Picker("Font", selection: $viewModel.selectedFontStyle) {
+                    Picker("Body Font", selection: $viewModel.bodyFontStyle) {
                         ForEach(CardFontStyle.allCases) { fontStyle in
                             Text(fontStyle.label).tag(fontStyle)
                         }
+                    }
+                }
+
+                Section("Metadata") {
+                    Toggle("Show author on this card", isOn: $viewModel.showsAuthor)
+                    Toggle("Show watermark on this card", isOn: $viewModel.showsWatermark)
+                    TextField("Watermark text", text: $viewModel.watermarkText)
+                    HStack {
+                        Text("Author Opacity")
+                        Slider(value: $viewModel.authorTextOpacity, in: 0...1)
+                    }
+                    HStack {
+                        Text("Watermark Opacity")
+                        Slider(value: $viewModel.watermarkTextOpacity, in: 0...1)
                     }
                 }
             }
@@ -134,10 +141,7 @@ struct CardPreviewView: View {
     }
 
     private func updateShareURL() {
-        shareImageURL = viewModel.makeShareURL(
-            showWatermark: settings.showWatermark,
-            authorName: authorForCard,
-        )
+        shareImageURL = viewModel.makeShareURL(settings: settings)
     }
 
     private func saveAndDismiss() {

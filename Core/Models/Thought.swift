@@ -9,19 +9,13 @@ final class Thought {
     var createdAt: Date
     var styleName: String
     var isFavorite: Bool
-    var fontStyleName: String
-    var textColorHex: String?
-    var gradientStartHex: String?
-    var gradientEndHex: String?
+    var themeOverridesJSON: String?
 
     init(
         title: String = "",
         text: String,
         styleName: String = CardStyle.midnight.rawValue,
-        fontStyleName: String = CardFontStyle.serif.rawValue,
-        textColorHex: String? = nil,
-        gradientStartHex: String? = nil,
-        gradientEndHex: String? = nil,
+        themeOverridesJSON: String? = nil,
     ) {
         self.id = UUID()
         self.title = title
@@ -29,10 +23,7 @@ final class Thought {
         self.createdAt = Date()
         self.styleName = styleName
         self.isFavorite = false
-        self.fontStyleName = fontStyleName
-        self.textColorHex = textColorHex
-        self.gradientStartHex = gradientStartHex
-        self.gradientEndHex = gradientEndHex
+        self.themeOverridesJSON = themeOverridesJSON
     }
 
     var style: CardStyle {
@@ -40,6 +31,28 @@ final class Thought {
     }
 
     var fontStyle: CardFontStyle {
-        CardFontStyle(rawValue: fontStyleName) ?? .serif
+        themeOverrides.flatMap { CardFontStyle(rawValue: $0.bodyFontStyleName ?? "") } ?? .serif
+    }
+
+    var themeOverrides: CardThemeOverrides? {
+        get {
+            guard let themeOverridesJSON,
+                  let data = themeOverridesJSON.data(using: .utf8),
+                  let decoded = try? JSONDecoder().decode(CardThemeOverrides.self, from: data)
+            else {
+                return nil
+            }
+            return decoded.persistableSnapshot()
+        }
+        set {
+            guard let normalized = newValue?.persistableSnapshot(),
+                  let data = try? JSONEncoder().encode(normalized),
+                  let json = String(data: data, encoding: .utf8)
+            else {
+                themeOverridesJSON = nil
+                return
+            }
+            themeOverridesJSON = json
+        }
     }
 }
