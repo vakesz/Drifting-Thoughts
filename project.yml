@@ -12,7 +12,7 @@ bundleId: &bundleId com.vakesz.driftingthoughts
 # ============================================
 options:
   deploymentTarget:
-    iOS: 18.0
+    iOS: 26.0
   groupSortPosition: top
   createIntermediateGroups: true
   generateEmptyDirectories: true
