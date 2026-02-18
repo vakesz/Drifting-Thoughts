@@ -42,12 +42,6 @@ struct SettingsView: View {
     private var cardsSection: some View {
         Section("Cards") {
             Toggle("Show watermark", isOn: $settings.showWatermark)
-
-            Picker("Default style", selection: $settings.defaultStyleName) {
-                ForEach(CardStyle.allCases) { style in
-                    Text(style.label).tag(style.rawValue)
-                }
-            }
         }
     }
 

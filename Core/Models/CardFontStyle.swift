@@ -22,4 +22,13 @@ enum CardFontStyle: String, CaseIterable, Identifiable, Sendable {
         case .classic: .system(size: 24, weight: .regular, design: .default)
         }
     }
+
+    var captionFont: Font {
+        switch self {
+        case .serif: .system(.caption, design: .serif)
+        case .rounded: .system(.caption, design: .rounded)
+        case .monospaced: .system(.caption, design: .monospaced)
+        case .classic: .system(.caption, design: .default)
+        }
+    }
 }

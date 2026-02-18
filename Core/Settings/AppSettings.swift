@@ -13,10 +13,6 @@ final class AppSettings: @unchecked Sendable {
         didSet { UserDefaults.standard.set(showWatermark, forKey: "drift.cards.showWatermark") }
     }
 
-    var defaultStyleName: String {
-        didSet { UserDefaults.standard.set(defaultStyleName, forKey: "drift.cards.defaultStyle") }
-    }
-
     var authorName: String {
         didSet { UserDefaults.standard.set(authorName, forKey: "drift.profile.authorName") }
     }
@@ -29,16 +25,10 @@ final class AppSettings: @unchecked Sendable {
         didSet { UserDefaults.standard.set(hasCompletedOnboarding, forKey: "drift.profile.didOnboard") }
     }
 
-    var defaultStyle: CardStyle {
-        get { CardStyle(rawValue: defaultStyleName) ?? .midnight }
-        set { defaultStyleName = newValue.rawValue }
-    }
-
     private init() {
         let defaults = UserDefaults.standard
         self.autoOpenKeyboard = defaults.object(forKey: "drift.compose.autoKeyboard") as? Bool ?? true
         self.showWatermark = defaults.object(forKey: "drift.cards.showWatermark") as? Bool ?? true
-        self.defaultStyleName = defaults.string(forKey: "drift.cards.defaultStyle") ?? CardStyle.midnight.rawValue
         self.authorName = defaults.string(forKey: "drift.profile.authorName") ?? ""
         self.showAuthorOnCard = defaults.object(forKey: "drift.profile.showAuthor") as? Bool ?? true
         self.hasCompletedOnboarding = defaults.object(forKey: "drift.profile.didOnboard") as? Bool ?? false

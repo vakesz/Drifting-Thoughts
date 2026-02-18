@@ -34,6 +34,10 @@ final class Thought {
         themeOverrides.flatMap { CardFontStyle(rawValue: $0.bodyFontStyleName ?? "") } ?? .serif
     }
 
+    var authorFontStyle: CardFontStyle {
+        themeOverrides.flatMap { CardFontStyle(rawValue: $0.authorFontStyleName ?? "") } ?? .serif
+    }
+
     var themeOverrides: CardThemeOverrides? {
         get {
             guard let themeOverridesJSON,

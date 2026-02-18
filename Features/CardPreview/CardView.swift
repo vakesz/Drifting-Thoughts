@@ -5,52 +5,44 @@ struct CardView: View {
     let style: CardStyle
     var themeOverrides: CardThemeOverrides?
     var settings: AppSettings = .shared
+    var isEditable: Bool = false
+    var onBodyFontTapped: (() -> Void)?
+    var onAuthorFontTapped: (() -> Void)?
 
     private var resolvedTheme: ResolvedCardTheme {
         CardThemeResolver.resolve(
             thought: thought,
             style: style,
             settings: settings,
-            themeOverrides: themeOverrides,
+            themeOverrides: themeOverrides
         )
     }
+
     private var bodyFont: Font { resolvedTheme.bodyFontStyle.font }
-    private var horizontalTextPadding: CGFloat {
-        DriftLayout.spacingXL * CGFloat(resolvedTheme.textPaddingScale)
-    }
+    private var authorFont: Font { resolvedTheme.authorFontStyle.captionFont }
 
     var body: some View {
         ZStack {
             MeshGradient.uniform3x3(colors: resolvedTheme.meshGradientColors)
 
             VStack(spacing: 0) {
-                contentTopSpacer
+                Spacer()
 
-                Text(thought.text)
-                    .font(bodyFont)
-                    .foregroundStyle(resolvedTheme.bodyTextColor)
-                    .lineSpacing(resolvedTheme.lineSpacing)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, horizontalTextPadding)
+                bodyText
+                    .padding(.horizontal, DriftLayout.spacingXL)
 
-                contentBottomSpacer
+                Spacer()
 
                 if resolvedTheme.showWatermark || resolvedTheme.showAuthor {
                     VStack(spacing: DriftLayout.spacingXS) {
                         if let authorName = resolvedTheme.authorName, resolvedTheme.showAuthor {
-                            Text("- \(authorName)")
-                                .font(.caption)
-                                .foregroundStyle(
-                                    resolvedTheme.authorTextColor.opacity(resolvedTheme.authorTextOpacity)
-                                )
+                            authorTextView(authorName)
                         }
 
                         if resolvedTheme.showWatermark {
-                            Text(resolvedTheme.watermarkText)
+                            Text(CardThemeResolver.defaultWatermarkText)
                                 .font(.caption2)
-                                .foregroundStyle(
-                                    resolvedTheme.watermarkTextColor.opacity(resolvedTheme.watermarkTextOpacity)
-                                )
+                                .foregroundStyle(resolvedTheme.watermarkTextColor.opacity(0.25))
                         }
                     }
                     .padding(.bottom, DriftLayout.spacingMD)
@@ -61,29 +53,25 @@ struct CardView: View {
         .clipShape(RoundedRectangle(cornerRadius: DriftLayout.cornerRadiusLG))
     }
 
-    @ViewBuilder
-    private var contentTopSpacer: some View {
-        switch resolvedTheme.contentAlignment {
-        case .top:
-            EmptyView()
-        case .center:
-            Spacer()
-        case .bottom:
-            Spacer()
-            Spacer()
-        }
+    private var bodyText: some View {
+        Text(thought.text)
+            .font(bodyFont)
+            .foregroundStyle(resolvedTheme.bodyTextColor)
+            .multilineTextAlignment(.center)
+            .minimumScaleFactor(0.3)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                if isEditable { onBodyFontTapped?() }
+            }
     }
 
-    @ViewBuilder
-    private var contentBottomSpacer: some View {
-        switch resolvedTheme.contentAlignment {
-        case .top:
-            Spacer()
-            Spacer()
-        case .center:
-            Spacer()
-        case .bottom:
-            EmptyView()
-        }
+    private func authorTextView(_ authorName: String) -> some View {
+        Text("- \(authorName)")
+            .font(authorFont)
+            .foregroundStyle(resolvedTheme.authorTextColor.opacity(0.5))
+            .contentShape(Rectangle())
+            .onTapGesture {
+                if isEditable { onAuthorFontTapped?() }
+            }
     }
 }
