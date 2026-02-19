@@ -5,7 +5,8 @@ name: DriftingThoughts
 # ============================================
 version: &version 0.1.0
 buildNumber: &buildNumber 1
-bundleId: &bundleId com.vakesz.driftingthoughts
+bundleId: &bundleId com.vakesz.driftingthought
+teamId: &teamId H8W5DK3FN2
 
 # ============================================
 # PROJECT OPTIONS
@@ -42,10 +43,18 @@ settings:
   # Platform
   TARGETED_DEVICE_FAMILY: "1"
 
+  # Security
+  ENABLE_USER_SCRIPT_SANDBOXING: YES
+
   # Code Quality
   GCC_TREAT_WARNINGS_AS_ERRORS: YES
   SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+
+  # Build Optimization
   DEAD_CODE_STRIPPING: YES
+  ENABLE_MODULE_VERIFIER: YES
+  MODULE_VERIFIER_SUPPORTED_LANGUAGES: "objective-c objective-c++"
+  MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS: "gnu11 gnu++20"
 
   # Modern Xcode Features
   ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
@@ -59,14 +68,27 @@ settings:
       SWIFT_COMPILATION_MODE: singlefile
       SWIFT_OPTIMIZATION_LEVEL: "-Onone"
       DEBUG_INFORMATION_FORMAT: dwarf
+      GCC_OPTIMIZATION_LEVEL: "0"
+      COPY_PHASE_STRIP: NO
+      STRIP_INSTALLED_PRODUCT: NO
+      DEPLOYMENT_POSTPROCESSING: NO
 
     Release:
       ONLY_ACTIVE_ARCH: NO
       SWIFT_COMPILATION_MODE: wholemodule
       SWIFT_OPTIMIZATION_LEVEL: "-O"
+      GCC_OPTIMIZATION_LEVEL: "s"
+      LLVM_LTO: monolithic
       DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+      DWARF_DSYM_FOLDER_PATH: "$(CONFIGURATION_BUILD_DIR)"
+      GCC_GENERATE_DEBUGGING_SYMBOLS: YES
       COPY_PHASE_STRIP: YES
       STRIP_INSTALLED_PRODUCT: YES
+      STRIP_STYLE: "all"
+      STRIP_SWIFT_SYMBOLS: YES
+      DEPLOYMENT_POSTPROCESSING: YES
+      SEPARATE_STRIP: YES
+      ASSETCATALOG_COMPILER_OPTIMIZATION: "time"
       VALIDATE_PRODUCT: YES
 
 # ============================================
@@ -89,18 +111,37 @@ targets:
 
     settings:
       base:
+        # Product Identity
         PRODUCT_NAME: DriftingThoughts
         PRODUCT_BUNDLE_IDENTIFIER: *bundleId
         MARKETING_VERSION: *version
         CURRENT_PROJECT_VERSION: *buildNumber
-        DEVELOPMENT_TEAM: ""
+
+        # Code Signing
+        DEVELOPMENT_TEAM: *teamId
         CODE_SIGN_STYLE: Automatic
-        INFOPLIST_KEY_CFBundleDisplayName: "Drifting Thoughts"
-        INFOPLIST_KEY_UILaunchScreen_Generation: true
-        INFOPLIST_KEY_UIRequiresFullScreen: true
-        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        CODE_SIGN_IDENTITY: "Apple Development"
+
+        # Asset Catalog
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
+        ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS: YES
+        GENERATE_ASSET_SYMBOLS: YES
+
+        # Distribution
+        SKIP_INSTALL: NO
+        INSTALL_PATH: "$(LOCAL_APPS_DIR)"
 
     info:
       path: Supporting/Info.plist
       properties:
+        CFBundleDisplayName: Drifting Thoughts
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
