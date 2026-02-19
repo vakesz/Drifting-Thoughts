@@ -9,17 +9,6 @@ enum CardStyle: String, CaseIterable, Identifiable, Sendable {
     var gradientStartColor: Color { Color("\(rawValue.capitalized)GradientStart") }
     var gradientEndColor: Color { Color("\(rawValue.capitalized)GradientEnd") }
     var textColor: Color { Color("\(rawValue.capitalized)Text") }
-
-    /// MeshGradient control points — each style gets a unique 3x3 mesh
-    var meshColors: [Color] {
-        let start = gradientStartColor
-        let end = gradientEndColor
-        return [
-            start, start, end,
-            start, end, end,
-            end, end, start,
-        ]
-    }
 }
 
 // MARK: - MeshGradient Helpers

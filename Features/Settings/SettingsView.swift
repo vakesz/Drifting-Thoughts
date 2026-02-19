@@ -24,7 +24,7 @@ struct SettingsView: View {
             TextField("Author name", text: $settings.authorName)
                 .textInputAutocapitalization(.words)
                 .onChange(of: settings.authorName) { _, newValue in
-                    settings.authorName = String(newValue.prefix(DriftLayout.maxAuthorNameCount))
+                    settings.authorName = String(newValue.prefix(DriftLayout.authorNameCharacterLimit))
                 }
 
             Toggle("Show author on cards", isOn: $settings.showAuthorOnCard)

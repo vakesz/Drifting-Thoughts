@@ -1,17 +1,20 @@
 import SwiftUI
 
-struct CardPreviewView: View {
+struct CardDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Bindable private var settings = AppSettings.shared
-    @State private var viewModel: CardPreviewViewModel
+    @State private var viewModel: CardDetailViewModel
     @State private var saveFeedbackTrigger = false
-    @State private var showBodyFontPicker = false
-    @State private var showAuthorFontPicker = false
+    @State private var activeFontPicker: FontPickerTarget?
     @State private var shareImageURL: URL?
     let onSave: (() -> Void)?
 
     private var isComposePreview: Bool { onSave != nil }
+
+    private enum FontPickerTarget {
+        case body, author
+    }
 
     init(
         title: String,
@@ -19,7 +22,7 @@ struct CardPreviewView: View {
         existingThought: Thought? = nil,
         onSave: (() -> Void)? = nil
     ) {
-        _viewModel = State(initialValue: CardPreviewViewModel(
+        _viewModel = State(initialValue: CardDetailViewModel(
             title: title,
             text: text,
             existingThought: existingThought
@@ -70,17 +73,23 @@ struct CardPreviewView: View {
             themeOverrides: viewModel.draftThemeOverrides,
             settings: settings,
             isEditable: isComposePreview,
-            onBodyFontTapped: { showBodyFontPicker = true },
-            onAuthorFontTapped: { showAuthorFontPicker = true }
+            onBodyFontTapped: { activeFontPicker = .body },
+            onAuthorFontTapped: { activeFontPicker = .author }
         )
         .shadow(color: .cardShadow, radius: 20, y: 10)
         .padding(.horizontal, DriftLayout.spacingXL)
         .padding(.top, DriftLayout.spacingMD)
-        .popover(isPresented: $showBodyFontPicker) {
-            fontPicker(selection: $viewModel.bodyFontStyle)
-        }
-        .popover(isPresented: $showAuthorFontPicker) {
-            fontPicker(selection: $viewModel.authorFontStyle)
+        .popover(
+            isPresented: Binding(
+                get: { activeFontPicker != nil },
+                set: { if !$0 { activeFontPicker = nil } }
+            )
+        ) {
+            fontPicker(
+                selection: activeFontPicker == .body
+                    ? $viewModel.bodyFontStyle
+                    : $viewModel.authorFontStyle
+            )
         }
     }
 
@@ -91,8 +100,7 @@ struct CardPreviewView: View {
             ForEach(CardFontStyle.allCases) { fontStyle in
                 Button {
                     selection.wrappedValue = fontStyle
-                    showBodyFontPicker = false
-                    showAuthorFontPicker = false
+                    activeFontPicker = nil
                 } label: {
                     HStack {
                         Text(fontStyle.label)

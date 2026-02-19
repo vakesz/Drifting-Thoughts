@@ -40,7 +40,7 @@ struct CardView: View {
                         }
 
                         if resolvedTheme.showWatermark {
-                            Text(CardThemeResolver.defaultWatermarkText)
+                            Text(DriftLayout.watermarkText)
                                 .font(.caption2)
                                 .foregroundStyle(resolvedTheme.watermarkTextColor.opacity(0.25))
                         }

@@ -18,9 +18,13 @@ enum DriftLayout {
 
     static let cardAspectRatio: CGFloat = 4.0 / 5.0
 
-    // MARK: - Text
+    // MARK: - Text Limits
 
-    static let maxCharacterCount = 500
-    static let maxTitleCount = 50
-    static let maxAuthorNameCount = 50
+    static let bodyCharacterLimit = 500
+    static let titleCharacterLimit = 50
+    static let authorNameCharacterLimit = 50
+
+    // MARK: - Watermark
+
+    static let watermarkText = "drifting thoughts"
 }

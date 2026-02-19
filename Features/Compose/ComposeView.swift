@@ -1,11 +1,14 @@
 import SwiftUI
 
 struct ComposeView: View {
-    @State private var viewModel = ComposeViewModel()
-    @State private var isShowingCardPreview = false
+    @State private var title = ""
+    @State private var text = ""
+    @State private var isShowingCardDetail = false
     @State private var titleLimitFeedbackTrigger = false
     @State private var characterLimitFeedbackTrigger = false
     @FocusState private var isTextEditorFocused: Bool
+
+    private var canPreview: Bool { !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
     var body: some View {
         NavigationStack {
@@ -21,19 +24,20 @@ struct ComposeView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         isTextEditorFocused = false
-                        isShowingCardPreview = true
+                        isShowingCardDetail = true
                     } label: {
                         Image(systemName: "eye")
                     }
-                    .disabled(!viewModel.canPreview)
+                    .disabled(!canPreview)
                 }
             }
-            .navigationDestination(isPresented: $isShowingCardPreview) {
-                CardPreviewView(
-                    title: viewModel.title,
-                    text: viewModel.text,
+            .navigationDestination(isPresented: $isShowingCardDetail) {
+                CardDetailView(
+                    title: title,
+                    text: text,
                     onSave: {
-                        viewModel.reset()
+                        title = ""
+                        text = ""
                     },
                 )
             }
@@ -46,17 +50,17 @@ struct ComposeView: View {
     }
 
     private var titleField: some View {
-        TextField("Title (optional)", text: $viewModel.title)
+        TextField("Title (optional)", text: $title)
             .font(.headline)
             .foregroundStyle(Color.textPrimary)
             .padding(.horizontal, DriftLayout.spacingMD)
             .padding(.top, DriftLayout.spacingSM)
-            .onChange(of: viewModel.title) { _, newValue in
-                let limited = String(newValue.prefix(DriftLayout.maxTitleCount))
+            .onChange(of: title) { _, newValue in
+                let limited = String(newValue.prefix(DriftLayout.titleCharacterLimit))
                 if limited != newValue {
-                    viewModel.title = limited
+                    title = limited
                 }
-                if limited.count == DriftLayout.maxTitleCount {
+                if limited.count == DriftLayout.titleCharacterLimit {
                     titleLimitFeedbackTrigger = true
                 }
             }
@@ -65,7 +69,7 @@ struct ComposeView: View {
 
     private var textEditor: some View {
         ZStack(alignment: .topLeading) {
-            TextEditor(text: $viewModel.text)
+            TextEditor(text: $text)
                 .focused($isTextEditorFocused)
                 .font(.system(.body, design: .serif))
                 .foregroundStyle(Color.textPrimary)
@@ -74,18 +78,18 @@ struct ComposeView: View {
                 .writingToolsBehavior(.complete)
                 .padding(.horizontal, DriftLayout.spacingMD)
                 .padding(.top, DriftLayout.spacingSM)
-                .onChange(of: viewModel.text) { _, newValue in
-                    let limited = String(newValue.prefix(DriftLayout.maxCharacterCount))
+                .onChange(of: text) { _, newValue in
+                    let limited = String(newValue.prefix(DriftLayout.bodyCharacterLimit))
                     if limited != newValue {
-                        viewModel.text = limited
+                        text = limited
                     }
-                    if limited.count == DriftLayout.maxCharacterCount {
+                    if limited.count == DriftLayout.bodyCharacterLimit {
                         characterLimitFeedbackTrigger = true
                     }
                 }
                 .sensoryFeedback(.warning, trigger: characterLimitFeedbackTrigger)
 
-            if viewModel.text.isEmpty {
+            if text.isEmpty {
                 Text("let a thought drift...")
                     .font(.system(.body, design: .serif))
                     .foregroundStyle(Color.textPlaceholder)
@@ -99,11 +103,11 @@ struct ComposeView: View {
 
     private var footer: some View {
         HStack {
-            Text("\(viewModel.title.count)/\(DriftLayout.maxTitleCount)")
+            Text("\(title.count)/\(DriftLayout.titleCharacterLimit)")
                 .font(.caption)
                 .foregroundStyle(Color.textSecondary)
             Spacer()
-            Text("\(viewModel.text.count)/\(DriftLayout.maxCharacterCount)")
+            Text("\(text.count)/\(DriftLayout.bodyCharacterLimit)")
                 .font(.caption)
                 .foregroundStyle(Color.textSecondary)
         }

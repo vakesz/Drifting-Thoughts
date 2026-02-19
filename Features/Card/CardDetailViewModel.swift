@@ -4,7 +4,7 @@ import SwiftUI
 
 @MainActor
 @Observable
-final class CardPreviewViewModel {
+final class CardDetailViewModel {
     let title: String
     let text: String
     let selectedStyle: CardStyle

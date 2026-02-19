@@ -11,7 +11,7 @@ struct OnboardingView: View {
                     TextField("Your name (optional)", text: $draftAuthorName)
                         .textInputAutocapitalization(.words)
                         .onChange(of: draftAuthorName) { _, newValue in
-                            draftAuthorName = String(newValue.prefix(DriftLayout.maxAuthorNameCount))
+                            draftAuthorName = String(newValue.prefix(DriftLayout.authorNameCharacterLimit))
                         }
 
                     Toggle("Show author on cards", isOn: $settings.showAuthorOnCard)

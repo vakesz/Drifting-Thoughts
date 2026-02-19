@@ -45,8 +45,6 @@ struct ResolvedCardTheme: Sendable {
 }
 
 enum CardThemeResolver {
-    static let defaultWatermarkText = "drifting thoughts"
-
     @MainActor
     static func resolve(
         thought: Thought,
@@ -54,12 +52,10 @@ enum CardThemeResolver {
         settings: AppSettings,
         themeOverrides: CardThemeOverrides? = nil
     ) -> ResolvedCardTheme {
-        let overrides = (themeOverrides ?? thought.themeOverrides)?.persistableSnapshot()
+        let overrides = themeOverrides ?? thought.themeOverrides
 
-        let bodyFontStyle = CardFontStyle(rawValue: overrides?.bodyFontStyleName ?? "")
-            ?? thought.fontStyle
-        let authorFontStyle = CardFontStyle(rawValue: overrides?.authorFontStyleName ?? "")
-            ?? thought.authorFontStyle
+        let bodyFontStyle = CardFontStyle(rawValue: overrides?.bodyFontStyleName ?? "") ?? .serif
+        let authorFontStyle = CardFontStyle(rawValue: overrides?.authorFontStyleName ?? "") ?? .serif
 
         let authorName = settings.authorName.trimmingCharacters(in: .whitespacesAndNewlines)
         let showAuthor = settings.showAuthorOnCard && !authorName.isEmpty
