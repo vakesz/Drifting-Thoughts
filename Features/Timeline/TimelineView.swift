@@ -4,16 +4,14 @@ import SwiftUI
 struct TimelineView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Thought.createdAt, order: .reverse) private var thoughts: [Thought]
-    @State private var searchText = ""
     @State private var isShowingSettings = false
 
-    private var filteredThoughts: [Thought] {
-        guard !searchText.isEmpty else { return thoughts }
-        let query = searchText.lowercased()
-        return thoughts.filter { thought in
-            thought.text.lowercased().contains(query) ||
-                thought.title.lowercased().contains(query)
+    private var groupedThoughts: [(date: Date, thoughts: [Thought])] {
+        Dictionary(grouping: thoughts) { thought in
+            Calendar.current.startOfDay(for: thought.createdAt)
         }
+        .sorted { $0.key > $1.key }
+        .map { (date: $0.key, thoughts: $0.value) }
     }
 
     var body: some View {
@@ -22,13 +20,12 @@ struct TimelineView: View {
                 if thoughts.isEmpty {
                     emptyState
                 } else {
-                    thoughtList
+                    thoughtTimeline
                 }
             }
             .background(Color.backgroundPrimary)
             .navigationTitle("Timeline")
-            .navigationBarTitleDisplayMode(.large)
-            .searchable(text: $searchText, prompt: "Search thoughts")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -55,92 +52,56 @@ struct TimelineView: View {
         }
     }
 
-    // MARK: - Thought List
+    // MARK: - Thought Timeline
 
-    private var thoughtList: some View {
-        List {
-            streakHeader
+    private var thoughtTimeline: some View {
+        ScrollView {
+            LazyVStack(spacing: DriftLayout.spacingMD) {
+                ForEach(groupedThoughts, id: \.date) { group in
+                    dateHeader(group.date)
 
-            ForEach(filteredThoughts) { thought in
-                NavigationLink {
-                    CardDetailView(
-                        title: thought.title,
-                        text: thought.text,
-                        existingThought: thought,
-                    )
-                } label: {
-                    ThoughtRowView(thought: thought)
-                }
-                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                    Button(role: .destructive) {
-                        modelContext.delete(thought)
-                    } label: {
-                        Label("Delete", systemImage: "trash")
+                    ForEach(group.thoughts) { thought in
+                        NavigationLink {
+                            CardDetailView(
+                                text: thought.text,
+                                existingThought: thought
+                            )
+                        } label: {
+                            CardView(thought: thought, style: thought.style)
+                        }
+                        .buttonStyle(.plain)
+                        .contextMenu {
+                            Button {
+                                thought.isFavorite.toggle()
+                            } label: {
+                                Label(
+                                    thought.isFavorite ? "Unfavorite" : "Favorite",
+                                    systemImage: thought.isFavorite ? "star.slash" : "star"
+                                )
+                            }
+
+                            Button(role: .destructive) {
+                                modelContext.delete(thought)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                        .padding(.horizontal, DriftLayout.spacingMD)
                     }
                 }
-                .swipeActions(edge: .leading) {
-                    Button {
-                        thought.isFavorite.toggle()
-                    } label: {
-                        Label(
-                            thought.isFavorite ? "Unfavorite" : "Favorite",
-                            systemImage: thought.isFavorite ? "star.slash" : "star",
-                        )
-                    }
-                    .tint(.yellow)
-                }
             }
-        }
-        .listStyle(.plain)
-    }
-
-    // MARK: - Streak Header
-
-    private var streakHeader: some View {
-        let streak = Self.calculateStreak(from: thoughts)
-        return Group {
-            if streak > 0 {
-                HStack(spacing: DriftLayout.spacingSM) {
-                    Image(systemName: "flame.fill")
-                        .foregroundStyle(Color.brandAccent)
-                        .symbolEffect(.bounce, value: streak)
-                    Text("\(streak) day streak")
-                        .font(.footnote.weight(.medium))
-                        .foregroundStyle(Color.textSecondary)
-                }
-                .frame(maxWidth: .infinity, alignment: .center)
-                .listRowSeparator(.hidden)
-                .padding(.vertical, DriftLayout.spacingXS)
-            }
+            .padding(.vertical, DriftLayout.spacingSM)
         }
     }
 
-    // MARK: - Streak Calculation
+    // MARK: - Date Header
 
-    private static func calculateStreak(from thoughts: [Thought]) -> Int {
-        guard !thoughts.isEmpty else { return 0 }
-
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-
-        let uniqueDays = Set(thoughts.map { calendar.startOfDay(for: $0.createdAt) })
-            .sorted(by: >)
-
-        guard let mostRecent = uniqueDays.first else { return 0 }
-
-        // Streak only counts if the most recent entry is today or yesterday
-        let daysSinceLast = calendar.dateComponents([.day], from: mostRecent, to: today).day ?? 0
-        guard daysSinceLast <= 1 else { return 0 }
-
-        var streak = 1
-        for idx in 1..<uniqueDays.count {
-            let expected = calendar.date(byAdding: .day, value: -idx, to: mostRecent)
-            if let expected, calendar.isDate(uniqueDays[idx], inSameDayAs: expected) {
-                streak += 1
-            } else {
-                break
-            }
-        }
-        return streak
+    private func dateHeader(_ date: Date) -> some View {
+        Text(date, format: Date.FormatStyle().month(.wide).day().year())
+            .font(.title3.weight(.medium))
+            .foregroundStyle(Color.textPrimary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, DriftLayout.spacingMD)
+            .padding(.top, DriftLayout.spacingMD)
     }
 }

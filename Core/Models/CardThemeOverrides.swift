@@ -25,9 +25,7 @@ struct CardThemeOverrides: Codable, Equatable, Sendable {
 }
 
 struct ResolvedCardTheme: Sendable {
-    var bodyTextColor: Color
-    var authorTextColor: Color
-    var watermarkTextColor: Color
+    var textColor: Color
     var backgroundGradientStart: Color
     var backgroundGradientEnd: Color
 
@@ -62,9 +60,7 @@ enum CardThemeResolver {
         let showWatermark = settings.showWatermark
 
         return ResolvedCardTheme(
-            bodyTextColor: style.textColor,
-            authorTextColor: style.textColor,
-            watermarkTextColor: style.textColor,
+            textColor: style.textColor,
             backgroundGradientStart: style.gradientStartColor,
             backgroundGradientEnd: style.gradientEndColor,
             bodyFontStyle: bodyFontStyle,

@@ -21,7 +21,7 @@ enum DriftLayout {
     // MARK: - Text Limits
 
     static let bodyCharacterLimit = 500
-    static let titleCharacterLimit = 50
+    static let titleCharacterLimit = 50 // used by computed Thought.title
     static let authorNameCharacterLimit = 50
 
     // MARK: - Watermark

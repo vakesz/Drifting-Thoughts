@@ -4,7 +4,6 @@ import SwiftData
 @Model
 final class Thought {
     var id: UUID
-    var title: String
     var text: String
     var createdAt: Date
     var styleName: String
@@ -12,13 +11,11 @@ final class Thought {
     var themeOverrides: CardThemeOverrides?
 
     init(
-        title: String = "",
         text: String,
         styleName: String = CardStyle.midnight.rawValue,
         themeOverrides: CardThemeOverrides? = nil,
     ) {
         self.id = UUID()
-        self.title = title
         self.text = text
         self.createdAt = Date()
         self.styleName = styleName
@@ -28,5 +25,10 @@ final class Thought {
 
     var style: CardStyle {
         CardStyle(rawValue: styleName) ?? .midnight
+    }
+
+    var title: String {
+        let firstLine = text.prefix(while: { $0 != "\n" })
+        return String(firstLine.prefix(DriftLayout.titleCharacterLimit)).trimmingCharacters(in: .whitespaces)
     }
 }

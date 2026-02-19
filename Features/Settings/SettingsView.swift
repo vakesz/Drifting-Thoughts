@@ -8,8 +8,8 @@ struct SettingsView: View {
     var body: some View {
         Form {
             profileSection
-            writingSection
             cardsSection
+            streakSection
             dataSection
             aboutSection
         }
@@ -17,7 +17,7 @@ struct SettingsView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    // MARK: - Writing
+    // MARK: - Profile
 
     private var profileSection: some View {
         Section("Profile") {
@@ -31,17 +31,23 @@ struct SettingsView: View {
         }
     }
 
-    private var writingSection: some View {
-        Section("Writing") {
-            Toggle("Auto-open keyboard", isOn: $settings.autoOpenKeyboard)
-        }
-    }
-
     // MARK: - Cards
 
     private var cardsSection: some View {
         Section("Cards") {
             Toggle("Show watermark", isOn: $settings.showWatermark)
+        }
+    }
+
+    // MARK: - Streak
+
+    private var streakSection: some View {
+        Section("Streak") {
+            Picker("Frequency", selection: $settings.streakFrequency) {
+                ForEach(StreakFrequency.allCases) { frequency in
+                    Text(frequency.label).tag(frequency)
+                }
+            }
         }
     }
 

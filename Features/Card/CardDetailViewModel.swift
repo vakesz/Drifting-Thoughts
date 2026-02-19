@@ -5,18 +5,15 @@ import SwiftUI
 @MainActor
 @Observable
 final class CardDetailViewModel {
-    let title: String
     let text: String
     let selectedStyle: CardStyle
     var draftThemeOverrides: CardThemeOverrides
     var existingThought: Thought?
 
     init(
-        title: String,
         text: String,
         existingThought: Thought? = nil
     ) {
-        self.title = title
         self.text = text
         self.existingThought = existingThought
         self.selectedStyle = existingThought?.style ?? .sunset
@@ -35,13 +32,11 @@ final class CardDetailViewModel {
 
     func save(in context: ModelContext) {
         if let existing = existingThought {
-            existing.title = title
             existing.text = text
             existing.styleName = selectedStyle.rawValue
             existing.themeOverrides = draftThemeOverrides
         } else {
             let thought = Thought(
-                title: title,
                 text: text,
                 styleName: selectedStyle.rawValue
             )
@@ -55,7 +50,6 @@ final class CardDetailViewModel {
             return existing
         }
         let previewThought = Thought(
-            title: title,
             text: text,
             styleName: selectedStyle.rawValue
         )
