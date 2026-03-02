@@ -5,6 +5,8 @@ struct SearchView: View {
     @Binding var searchText: String
     let thoughts: [Thought]
 
+    @State private var thoughtToDelete: Thought?
+
     private var filteredThoughts: [Thought] {
         guard !searchText.isEmpty else { return [] }
         let query = searchText.lowercased()
@@ -27,6 +29,22 @@ struct SearchView: View {
             .background(Color.backgroundPrimary)
             .navigationTitle("Search")
             .navigationBarTitleDisplayMode(.inline)
+            .confirmationDialog(
+                "Delete this thought?",
+                isPresented: Binding(
+                    get: { thoughtToDelete != nil },
+                    set: { if !$0 { thoughtToDelete = nil } }
+                ),
+                titleVisibility: .visible
+            ) {
+                Button("Delete", role: .destructive) {
+                    if let thought = thoughtToDelete {
+                        modelContext.delete(thought)
+                    }
+                }
+            } message: {
+                Text("This can't be undone.")
+            }
         }
     }
 
@@ -61,21 +79,8 @@ struct SearchView: View {
                         CardView(thought: thought, style: thought.style)
                     }
                     .buttonStyle(.plain)
-                    .contextMenu {
-                        Button {
-                            thought.isFavorite.toggle()
-                        } label: {
-                            Label(
-                                thought.isFavorite ? "Unfavorite" : "Favorite",
-                                systemImage: thought.isFavorite ? "star.slash" : "star"
-                            )
-                        }
-
-                        Button(role: .destructive) {
-                            modelContext.delete(thought)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
+                    .thoughtContextMenu(thought: thought) {
+                        thoughtToDelete = thought
                     }
                     .padding(.horizontal, DriftLayout.spacingMD)
                 }

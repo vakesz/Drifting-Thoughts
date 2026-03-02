@@ -12,7 +12,7 @@ final class Thought {
 
     init(
         text: String,
-        styleName: String = CardStyle.midnight.rawValue,
+        styleName: String = CardStyle.sunset.rawValue,
         themeOverrides: CardThemeOverrides? = nil,
     ) {
         self.id = UUID()
@@ -24,7 +24,7 @@ final class Thought {
     }
 
     var style: CardStyle {
-        CardStyle(rawValue: styleName) ?? .midnight
+        CardStyle(rawValue: styleName) ?? .sunset
     }
 
     var title: String {

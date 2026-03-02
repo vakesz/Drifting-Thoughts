@@ -163,7 +163,7 @@ struct ComposeView: View {
                         text = limited
                     }
                     if limited.count == DriftLayout.bodyCharacterLimit {
-                        characterLimitFeedbackTrigger = true
+                        characterLimitFeedbackTrigger.toggle()
                     }
                 }
                 .sensoryFeedback(.warning, trigger: characterLimitFeedbackTrigger)

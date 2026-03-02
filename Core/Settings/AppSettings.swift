@@ -29,6 +29,7 @@ enum StreakFrequency: String, CaseIterable, Identifiable, Sendable {
 
 @MainActor
 @Observable
+// @unchecked Sendable required: passed to ImageRenderer content which crosses isolation boundaries
 final class AppSettings: @unchecked Sendable {
     static let shared = AppSettings()
 

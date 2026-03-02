@@ -5,6 +5,7 @@ struct CardView: View {
     let style: CardStyle
     var themeOverrides: CardThemeOverrides?
     var settings: AppSettings = .shared
+    var explicitWidth: CGFloat?
     var bodyFontSelection: Binding<CardFontStyle>?
     var authorFontSelection: Binding<CardFontStyle>?
 
@@ -22,21 +23,60 @@ struct CardView: View {
         )
     }
 
+    // MARK: - Dynamic Sizing
+
+    /// Interpolates aspect ratio between min (short text) and max (full text).
+    /// Higher ratio value = wider relative to height = shorter card.
+    private var dynamicAspectRatio: CGFloat {
+        Self.dynamicAspectRatio(for: thought.text)
+    }
+
+    static func dynamicAspectRatio(for text: String) -> CGFloat {
+        let charCount = text.count
+        let maxChars = DriftLayout.bodyCharacterLimit
+        let t = min(CGFloat(charCount) / CGFloat(maxChars), 1.0)
+        return DriftLayout.cardShortAspectRatio + t * (DriftLayout.cardTallAspectRatio - DriftLayout.cardShortAspectRatio)
+    }
+
+    /// Font size that attempts to fill the full card width for the given text.
+    /// Uses available width and a scale factor so a single word spans the card;
+    /// .minimumScaleFactor handles shrinking for long text.
+    private func bodyFontSize(availableWidth: CGFloat) -> CGFloat {
+        availableWidth * 0.28
+    }
+
     var body: some View {
+        cardContent
+            .aspectRatio(dynamicAspectRatio, contentMode: .fit)
+            .clipShape(RoundedRectangle(cornerRadius: DriftLayout.cornerRadiusLG))
+    }
+
+    @ViewBuilder
+    private var cardContent: some View {
+        if let explicitWidth {
+            cardLayout(availableWidth: explicitWidth)
+        } else {
+            GeometryReader { geometry in
+                cardLayout(availableWidth: geometry.size.width)
+            }
+        }
+    }
+
+    private func cardLayout(availableWidth: CGFloat) -> some View {
         ZStack {
             MeshGradient.uniform3x3(colors: resolvedTheme.meshGradientColors)
 
             VStack(spacing: 0) {
                 Spacer()
 
-                bodyText
+                bodyText(availableWidth: availableWidth - DriftLayout.spacingXL * 2)
                     .padding(.horizontal, DriftLayout.spacingXL)
 
                 Spacer()
 
-                if resolvedTheme.showWatermark || resolvedTheme.showAuthor {
+                if resolvedTheme.showWatermark || resolvedTheme.authorName != nil {
                     VStack(spacing: DriftLayout.spacingXS) {
-                        if let authorName = resolvedTheme.authorName, resolvedTheme.showAuthor {
+                        if let authorName = resolvedTheme.authorName {
                             authorTextView(authorName)
                         }
 
@@ -50,15 +90,13 @@ struct CardView: View {
                 }
             }
         }
-        .aspectRatio(DriftLayout.cardAspectRatio, contentMode: .fit)
-        .clipShape(RoundedRectangle(cornerRadius: DriftLayout.cornerRadiusLG))
     }
 
     // MARK: - Body Text
 
-    private var bodyText: some View {
+    private func bodyText(availableWidth: CGFloat) -> some View {
         Text(thought.text)
-            .font(resolvedTheme.bodyFontStyle.font)
+            .font(.system(size: bodyFontSize(availableWidth: availableWidth), design: resolvedTheme.bodyFontStyle.design))
             .foregroundStyle(resolvedTheme.textColor)
             .multilineTextAlignment(.center)
             .minimumScaleFactor(0.3)

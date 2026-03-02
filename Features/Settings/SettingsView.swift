@@ -24,7 +24,10 @@ struct SettingsView: View {
             TextField("Author name", text: $settings.authorName)
                 .textInputAutocapitalization(.words)
                 .onChange(of: settings.authorName) { _, newValue in
-                    settings.authorName = String(newValue.prefix(DriftLayout.authorNameCharacterLimit))
+                    let truncated = String(newValue.prefix(DriftLayout.authorNameCharacterLimit))
+                    if truncated != newValue {
+                        settings.authorName = truncated
+                    }
                 }
 
             Toggle("Show author on cards", isOn: $settings.showAuthorOnCard)

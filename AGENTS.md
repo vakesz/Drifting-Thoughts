@@ -167,8 +167,8 @@ extension Color {                             // colors from asset catalog
 
 ### Design System
 
-- **Layout**: `DriftLayout.spacingXS/SM/MD/LG/XL`, `DriftLayout.cornerRadiusSM/LG`, `DriftLayout.cardAspectRatio`
-- **Limits**: `DriftLayout.maxCharacterCount` (500), `DriftLayout.maxTitleCount` (50), `DriftLayout.maxAuthorNameCount` (50)
+- **Layout**: `DriftLayout.spacingXS/SM/MD/LG/XL`, `DriftLayout.cornerRadiusSM/LG`, `DriftLayout.cardShortAspectRatio/cardTallAspectRatio`
+- **Limits**: `DriftLayout.bodyCharacterLimit` (500), `DriftLayout.titleCharacterLimit` (50), `DriftLayout.authorNameCharacterLimit` (50)
 - **Colors**: `Color.brandAccent`, `.backgroundPrimary`, `.textPrimary`, `.textSecondary`, `.textPlaceholder`, `.cardShadow` — all from asset catalog
 
 ## Theme System

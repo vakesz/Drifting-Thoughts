@@ -58,17 +58,45 @@ struct CardDetailView: View {
     // MARK: - Card
 
     private var cardSection: some View {
-        CardView(
-            thought: viewModel.makeThoughtForPreview(),
-            style: viewModel.selectedStyle,
-            themeOverrides: viewModel.draftThemeOverrides,
-            settings: settings,
-            bodyFontSelection: isComposePreview ? $viewModel.bodyFontStyle : nil,
-            authorFontSelection: isComposePreview ? $viewModel.authorFontStyle : nil
-        )
-        .shadow(color: .cardShadow, radius: 20, y: 10)
+        VStack(spacing: DriftLayout.spacingMD) {
+            CardView(
+                thought: viewModel.makeThoughtForPreview(),
+                style: viewModel.selectedStyle,
+                themeOverrides: viewModel.draftThemeOverrides,
+                settings: settings,
+                bodyFontSelection: isComposePreview ? $viewModel.bodyFontStyle : nil,
+                authorFontSelection: isComposePreview ? $viewModel.authorFontStyle : nil
+            )
+            .shadow(color: .cardShadow, radius: 20, y: 10)
+
+            if isComposePreview {
+                stylePicker
+            }
+        }
         .padding(.horizontal, DriftLayout.spacingMD)
         .padding(.vertical, DriftLayout.spacingMD)
+    }
+
+    // MARK: - Style Picker
+
+    private var stylePicker: some View {
+        HStack(spacing: DriftLayout.spacingSM) {
+            ForEach(CardStyle.allCases) { style in
+                Button {
+                    viewModel.selectedStyle = style
+                } label: {
+                    Circle()
+                        .fill(style.gradientStartColor)
+                        .frame(width: 32, height: 32)
+                        .overlay {
+                            Circle()
+                                .strokeBorder(Color.textPrimary, lineWidth: viewModel.selectedStyle == style ? 2 : 0)
+                        }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(style.label)
+            }
+        }
     }
 
     // MARK: - Actions

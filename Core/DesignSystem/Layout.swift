@@ -16,7 +16,8 @@ enum DriftLayout {
 
     // MARK: - Card
 
-    static let cardAspectRatio: CGFloat = 4.0 / 5.0
+    static let cardShortAspectRatio: CGFloat = 4.0 / 3.0 // short text → wider card
+    static let cardTallAspectRatio: CGFloat = 4.0 / 5.0 // long text → taller card
 
     // MARK: - Text Limits
 

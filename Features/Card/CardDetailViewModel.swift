@@ -6,9 +6,12 @@ import SwiftUI
 @Observable
 final class CardDetailViewModel {
     let text: String
-    let selectedStyle: CardStyle
+    var selectedStyle: CardStyle
     var draftThemeOverrides: CardThemeOverrides
     var existingThought: Thought?
+
+    private var cachedPreviewThought: Thought?
+    private var lastShareURL: URL?
 
     init(
         text: String,
@@ -31,16 +34,17 @@ final class CardDetailViewModel {
     }
 
     func save(in context: ModelContext) {
+        let normalizedOverrides = draftThemeOverrides.persistableSnapshot()
         if let existing = existingThought {
             existing.text = text
             existing.styleName = selectedStyle.rawValue
-            existing.themeOverrides = draftThemeOverrides
+            existing.themeOverrides = normalizedOverrides
         } else {
             let thought = Thought(
                 text: text,
                 styleName: selectedStyle.rawValue
             )
-            thought.themeOverrides = draftThemeOverrides
+            thought.themeOverrides = normalizedOverrides
             context.insert(thought)
         }
     }
@@ -49,23 +53,37 @@ final class CardDetailViewModel {
         if let existing = existingThought {
             return existing
         }
-        let previewThought = Thought(
-            text: text,
-            styleName: selectedStyle.rawValue
-        )
-        previewThought.themeOverrides = draftThemeOverrides
-        return previewThought
+        if let cached = cachedPreviewThought {
+            cached.text = text
+            cached.styleName = selectedStyle.rawValue
+            cached.themeOverrides = draftThemeOverrides
+            return cached
+        }
+        let thought = Thought(text: text, styleName: selectedStyle.rawValue)
+        thought.themeOverrides = draftThemeOverrides
+        cachedPreviewThought = thought
+        return thought
     }
 
     func makeShareURL(settings: AppSettings) -> URL? {
+        if let previous = lastShareURL {
+            try? FileManager.default.removeItem(at: previous)
+            lastShareURL = nil
+        }
+
+        let exportWidth: CGFloat = 1080
+        let aspectRatio = CardView.dynamicAspectRatio(for: text)
+        let exportHeight = exportWidth / aspectRatio
+
         let exportView = CardView(
             thought: makeThoughtForPreview(),
             style: selectedStyle,
             themeOverrides: draftThemeOverrides,
-            settings: settings
+            settings: settings,
+            explicitWidth: exportWidth
         )
 
-        let renderer = ImageRenderer(content: exportView.frame(width: 1080, height: 1350))
+        let renderer = ImageRenderer(content: exportView.frame(width: exportWidth, height: exportHeight))
         renderer.scale = 3
 
         guard let uiImage = renderer.uiImage,
@@ -75,9 +93,10 @@ final class CardDetailViewModel {
         }
 
         let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("drifting-thought-\(UUID().uuidString).png")
+            .appendingPathComponent("drifting-thought-export.png")
         do {
             try data.write(to: url, options: .atomic)
+            lastShareURL = url
             return url
         } catch {
             return nil

@@ -15,6 +15,5 @@ enum CardFontStyle: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    var font: Font { .system(.title3, design: design) }
     var captionFont: Font { .system(.caption, design: design) }
 }
