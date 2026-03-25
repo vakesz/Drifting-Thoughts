@@ -13,10 +13,10 @@ teamId: &teamId H8W5DK3FN2
 # ============================================
 options:
   deploymentTarget:
-    iOS: 26.0
+    iOS: 18.0
   groupSortPosition: top
   createIntermediateGroups: true
-  generateEmptyDirectories: true
+  generateEmptyDirectories: false
 
 # ============================================
 # BUILD CONFIGURATIONS
@@ -36,29 +36,53 @@ fileGroups:
 # PROJECT-WIDE BUILD SETTINGS
 # ============================================
 settings:
-  # Swift Language
-  SWIFT_VERSION: 6.0
-  SWIFT_STRICT_CONCURRENCY: complete
+  base:
+    # Swift Language
+    SWIFT_VERSION: 6.0
+    SWIFT_ENFORCE_EXCLUSIVE_ACCESS: full
+    SWIFT_EMIT_LOC_STRINGS: YES
+    GENERATE_STRING_CATALOG_SWIFT_SYMBOLS: YES
+    STRING_CATALOG_GENERATE_SYMBOLS: YES
 
-  # Platform
-  TARGETED_DEVICE_FAMILY: "1"
+    # Platform & Deployment
+    TARGETED_DEVICE_FAMILY: "1,2"
 
-  # Security
-  ENABLE_USER_SCRIPT_SANDBOXING: YES
+    # Security
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    CODE_SIGNING_ALLOWED: YES
 
-  # Code Quality
-  GCC_TREAT_WARNINGS_AS_ERRORS: YES
-  SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+    # Code Quality - Treat Warnings as Errors
+    GCC_TREAT_WARNINGS_AS_ERRORS: YES
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
 
-  # Build Optimization
-  DEAD_CODE_STRIPPING: YES
-  ENABLE_MODULE_VERIFIER: YES
-  MODULE_VERIFIER_SUPPORTED_LANGUAGES: "objective-c objective-c++"
-  MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS: "gnu11 gnu++20"
+    # Code Quality - Static Analyzer (beyond defaults)
+    CLANG_ANALYZER_SECURITY_FLOATLOOPCOUNTER: YES
+    CLANG_ANALYZER_SECURITY_INSECUREAPI_UNCHECKEDRETURN: YES
 
-  # Modern Xcode Features
-  ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
-  GENERATE_INFOPLIST_FILE: YES
+    # Localizability Analysis (Strict)
+    CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED: YES
+    CLANG_ANALYZER_LOCALIZABILITY_MISSING_LOCALIZABLE: YES
+
+    # Build Optimization
+    DEAD_CODE_STRIPPING: YES
+    ENABLE_MODULE_VERIFIER: YES
+    MODULE_VERIFIER_SUPPORTED_LANGUAGES: "objective-c objective-c++"
+    MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS: "gnu11 gnu++20"
+
+    # Modern Xcode Features
+    ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
+    ENABLE_PREVIEWS: YES
+
+    # Modern Localization
+    LOCALIZED_STRING_MACRO_NAMES: NSLocalizedString CFCopyLocalizedString String(localized:)
+    LOCALIZED_STRING_SWIFTUI_SUPPORT: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+
+    # Additional Modern Settings (iOS 18 / Xcode 16)
+    SWIFT_EMIT_CONST_VALUE: YES
+    SWIFT_EMIT_DOC_COMMENT: YES
+    CLANG_ENABLE_MODULES: YES
+    ENABLE_STRICT_OBJC_MSGSEND: YES
 
   configs:
     Debug:
@@ -88,6 +112,8 @@ settings:
       STRIP_SWIFT_SYMBOLS: YES
       DEPLOYMENT_POSTPROCESSING: YES
       SEPARATE_STRIP: YES
+      GCC_UNROLL_LOOPS: YES
+      GCC_FAST_MATH: NO
       ASSETCATALOG_COMPILER_OPTIMIZATION: "time"
       VALIDATE_PRODUCT: YES
 
@@ -126,11 +152,13 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
         ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS: YES
+        ASSETCATALOG_COMPILER_STANDALONE_ICON_BEHAVIOR: all
         GENERATE_ASSET_SYMBOLS: YES
 
         # Distribution
         SKIP_INSTALL: NO
         INSTALL_PATH: "$(LOCAL_APPS_DIR)"
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: YES
 
     info:
       path: Supporting/Info.plist
