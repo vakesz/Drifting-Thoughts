@@ -7,8 +7,8 @@ enum StreakFrequency: String, CaseIterable, Identifiable, Sendable {
 
     var label: String {
         switch self {
-        case .daily: "Daily"
-        case .weekly: "Weekly"
+        case .daily: String(localized: "streak.frequency.daily")
+        case .weekly: String(localized: "streak.frequency.weekly")
         }
     }
 
@@ -21,15 +21,15 @@ enum StreakFrequency: String, CaseIterable, Identifiable, Sendable {
 
     var streakUnit: String {
         switch self {
-        case .daily: "day"
-        case .weekly: "week"
+        case .daily: String(localized: "streak.unit.day")
+        case .weekly: String(localized: "streak.unit.week")
         }
     }
 }
 
 @MainActor
 @Observable
-final class AppSettings: @unchecked Sendable {
+final class AppSettings {
     static let shared = AppSettings()
 
     var showWatermark: Bool {
@@ -59,5 +59,36 @@ final class AppSettings: @unchecked Sendable {
         self.showAuthorOnCard = defaults.object(forKey: "drift.profile.showAuthor") as? Bool ?? true
         self.hasCompletedOnboarding = defaults.object(forKey: "drift.profile.didOnboard") as? Bool ?? false
         self.streakFrequency = StreakFrequency(rawValue: defaults.string(forKey: "drift.streak.frequency") ?? "") ?? .daily
+    }
+}
+
+// MARK: - Streak Calculation
+
+extension StreakFrequency {
+    static func currentStreak(from thoughts: [Thought], frequency: StreakFrequency) -> Int {
+        guard !thoughts.isEmpty else { return 0 }
+
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let interval = frequency.intervalDays
+
+        let uniqueDays = Set(thoughts.map { calendar.startOfDay(for: $0.createdAt) })
+            .sorted(by: >)
+
+        guard let mostRecent = uniqueDays.first else { return 0 }
+
+        let daysSinceLast = calendar.dateComponents([.day], from: mostRecent, to: today).day ?? 0
+        guard daysSinceLast <= interval else { return 0 }
+
+        var streak = 1
+        for idx in 1 ..< uniqueDays.count {
+            let gap = calendar.dateComponents([.day], from: uniqueDays[idx], to: uniqueDays[idx - 1]).day ?? 0
+            if gap <= interval {
+                streak += 1
+            } else {
+                break
+            }
+        }
+        return streak
     }
 }

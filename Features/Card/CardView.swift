@@ -4,7 +4,7 @@ struct CardView: View {
     let thought: Thought
     let style: CardStyle
     var themeOverrides: CardThemeOverrides?
-    var settings: AppSettings = .shared
+    var settings: AppSettings
     var explicitWidth: CGFloat?
     var bodyFontSelection: Binding<CardFontStyle>?
     var authorFontSelection: Binding<CardFontStyle>?
@@ -64,7 +64,16 @@ struct CardView: View {
 
     private func cardLayout(availableWidth: CGFloat) -> some View {
         ZStack {
-            MeshGradient.uniform3x3(colors: resolvedTheme.meshGradientColors)
+            MeshGradient(
+                width: 3,
+                height: 3,
+                points: [
+                    [0.0, 0.0], [0.5, 0.0], [1.0, 0.0],
+                    [0.0, 0.5], [0.5, 0.5], [1.0, 0.5],
+                    [0.0, 1.0], [0.5, 1.0], [1.0, 1.0],
+                ],
+                colors: resolvedTheme.meshGradientColors
+            )
 
             VStack(spacing: 0) {
                 Spacer()

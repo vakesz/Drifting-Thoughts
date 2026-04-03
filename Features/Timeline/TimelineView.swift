@@ -3,10 +3,12 @@ import SwiftUI
 
 struct TimelineView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(AppSettings.self) private var settings
     @Query(sort: \Thought.createdAt, order: .reverse) private var thoughts: [Thought]
     @State private var isShowingSettings = false
     @State private var groupedThoughts: [(date: Date, thoughts: [Thought])] = []
     @State private var thoughtToDelete: Thought?
+    @State private var isShowingDeleteConfirmation = false
 
     var body: some View {
         NavigationStack {
@@ -38,20 +40,17 @@ struct TimelineView: View {
             }
             .confirmationDialog(
                 "Delete this thought?",
-                isPresented: Binding(
-                    get: { thoughtToDelete != nil },
-                    set: { if !$0 { thoughtToDelete = nil } }
-                ),
-                titleVisibility: .visible
-            ) {
-                Button("Delete", role: .destructive) {
-                    if let thought = thoughtToDelete {
+                isPresented: $isShowingDeleteConfirmation,
+                presenting: thoughtToDelete,
+                actions: { thought in
+                    Button("Delete", role: .destructive) {
                         modelContext.delete(thought)
                     }
+                },
+                message: { _ in
+                    Text("delete.confirmation")
                 }
-            } message: {
-                Text("This can't be undone.")
-            }
+            )
         }
     }
 
@@ -59,9 +58,9 @@ struct TimelineView: View {
 
     private var emptyState: some View {
         ContentUnavailableView {
-            Label("No thoughts yet", systemImage: "text.bubble")
+            Label("timeline.empty.title", systemImage: "text.bubble")
         } description: {
-            Text("let one drift...")
+            Text("timeline.empty.description")
         }
     }
 
@@ -80,11 +79,12 @@ struct TimelineView: View {
                                 existingThought: thought
                             )
                         } label: {
-                            CardView(thought: thought, style: thought.style)
+                            CardView(thought: thought, style: thought.style, settings: settings)
                         }
                         .buttonStyle(.plain)
                         .thoughtContextMenu(thought: thought) {
                             thoughtToDelete = thought
+                            isShowingDeleteConfirmation = true
                         }
                         .padding(.horizontal, DriftLayout.spacingMD)
                     }

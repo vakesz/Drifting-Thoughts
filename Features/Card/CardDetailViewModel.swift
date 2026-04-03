@@ -10,7 +10,6 @@ final class CardDetailViewModel {
     var draftThemeOverrides: CardThemeOverrides
     var existingThought: Thought?
 
-    private var cachedPreviewThought: Thought?
     private var lastShareURL: URL?
 
     init(
@@ -50,18 +49,9 @@ final class CardDetailViewModel {
     }
 
     func makeThoughtForPreview() -> Thought {
-        if let existing = existingThought {
-            return existing
-        }
-        if let cached = cachedPreviewThought {
-            cached.text = text
-            cached.styleName = selectedStyle.rawValue
-            cached.themeOverrides = draftThemeOverrides
-            return cached
-        }
+        if let existing = existingThought { return existing }
         let thought = Thought(text: text, styleName: selectedStyle.rawValue)
         thought.themeOverrides = draftThemeOverrides
-        cachedPreviewThought = thought
         return thought
     }
 

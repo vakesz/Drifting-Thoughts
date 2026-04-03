@@ -3,7 +3,7 @@ import SwiftUI
 
 struct ComposeView: View {
     @Query(sort: \Thought.createdAt, order: .reverse) private var thoughts: [Thought]
-    @Bindable private var settings = AppSettings.shared
+    @Environment(AppSettings.self) private var settings
     @State private var text = ""
     @State private var isShowingCardDetail = false
     @State private var isShowingDiscardAlert = false
@@ -15,7 +15,7 @@ struct ComposeView: View {
     private var isEditing: Bool { hasContent || isTextEditorFocused }
 
     private var streak: Int {
-        Self.calculateStreak(from: thoughts, frequency: settings.streakFrequency)
+        StreakFrequency.currentStreak(from: thoughts, frequency: settings.streakFrequency)
     }
 
     var body: some View {
@@ -84,9 +84,9 @@ struct ComposeView: View {
     private var greeting: (icon: String, text: String) {
         let hour = Calendar.current.component(.hour, from: Date())
         switch hour {
-        case 5 ..< 12: return ("sun.horizon", "good morning")
-        case 12 ..< 17: return ("sun.max", "good afternoon")
-        default: return ("moon.stars", "good evening")
+        case 5 ..< 12: return ("sun.horizon", String(localized: "greeting.morning"))
+        case 12 ..< 17: return ("sun.max", String(localized: "greeting.afternoon"))
+        default: return ("moon.stars", String(localized: "greeting.evening"))
         }
     }
 
@@ -104,11 +104,11 @@ struct ComposeView: View {
                     .font(.system(.title2, design: .serif))
                     .foregroundStyle(Color.textPrimary)
 
-                Text("let a thought drift...")
+                Text("compose.placeholder")
                     .font(.system(.body, design: .serif))
                     .foregroundStyle(Color.textPlaceholder)
 
-                Text("tap anywhere to begin")
+                Text("compose.tap_to_begin")
                     .font(.caption)
                     .foregroundStyle(Color.textPlaceholder.opacity(0.6))
                     .padding(.top, DriftLayout.spacingXS)
@@ -157,19 +157,16 @@ struct ComposeView: View {
                 .writingToolsBehavior(.complete)
                 .padding(.horizontal, DriftLayout.spacingMD)
                 .padding(.top, DriftLayout.spacingSM)
-                .onChange(of: text) { _, newValue in
-                    let limited = String(newValue.prefix(DriftLayout.bodyCharacterLimit))
-                    if limited != newValue {
-                        text = limited
-                    }
-                    if limited.count == DriftLayout.bodyCharacterLimit {
+                .characterLimit(DriftLayout.bodyCharacterLimit, on: $text)
+                .onChange(of: text) {
+                    if text.count == DriftLayout.bodyCharacterLimit {
                         characterLimitFeedbackTrigger.toggle()
                     }
                 }
                 .sensoryFeedback(.warning, trigger: characterLimitFeedbackTrigger)
 
             if text.isEmpty {
-                Text("let a thought drift...")
+                Text("compose.placeholder")
                     .font(.system(.body, design: .serif))
                     .foregroundStyle(Color.textPlaceholder)
                     .padding(.horizontal, DriftLayout.spacingMD + 5)
@@ -183,42 +180,12 @@ struct ComposeView: View {
     // MARK: - Character Count
 
     private var characterCount: some View {
-        Text("\(text.count)/\(DriftLayout.bodyCharacterLimit)")
+        Text(verbatim: "\(text.count)/\(DriftLayout.bodyCharacterLimit)")
             .font(.caption)
             .foregroundStyle(Color.textSecondary)
             .frame(maxWidth: .infinity, alignment: .trailing)
             .padding(.horizontal, DriftLayout.spacingMD)
             .padding(.top, DriftLayout.spacingXS)
             .transition(.opacity)
-    }
-
-    // MARK: - Streak Calculation
-
-    static func calculateStreak(from thoughts: [Thought], frequency: StreakFrequency) -> Int {
-        guard !thoughts.isEmpty else { return 0 }
-
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        let interval = frequency.intervalDays
-
-        let uniqueDays = Set(thoughts.map { calendar.startOfDay(for: $0.createdAt) })
-            .sorted(by: >)
-
-        guard let mostRecent = uniqueDays.first else { return 0 }
-
-        // Streak only counts if the most recent entry is within the current interval
-        let daysSinceLast = calendar.dateComponents([.day], from: mostRecent, to: today).day ?? 0
-        guard daysSinceLast <= interval else { return 0 }
-
-        var streak = 1
-        for idx in 1 ..< uniqueDays.count {
-            let gap = calendar.dateComponents([.day], from: uniqueDays[idx], to: uniqueDays[idx - 1]).day ?? 0
-            if gap <= interval {
-                streak += 1
-            } else {
-                break
-            }
-        }
-        return streak
     }
 }

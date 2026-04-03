@@ -4,27 +4,35 @@ enum CardStyle: String, CaseIterable, Identifiable, Sendable {
     case midnight, parchment, sunset
 
     var id: String { rawValue }
-    var label: String { rawValue.capitalized }
+    var label: String {
+        switch self {
+        case .midnight: String(localized: "card.style.midnight")
+        case .parchment: String(localized: "card.style.parchment")
+        case .sunset: String(localized: "card.style.sunset")
+        }
+    }
 
-    var gradientStartColor: Color { Color("\(rawValue.capitalized)GradientStart") }
-    var gradientEndColor: Color { Color("\(rawValue.capitalized)GradientEnd") }
-    var textColor: Color { Color("\(rawValue.capitalized)Text") }
-}
+    var gradientStartColor: Color {
+        switch self {
+        case .midnight: .midnightGradientStart
+        case .parchment: .parchmentGradientStart
+        case .sunset: .sunsetGradientStart
+        }
+    }
 
-// MARK: - MeshGradient Helpers
+    var gradientEndColor: Color {
+        switch self {
+        case .midnight: .midnightGradientEnd
+        case .parchment: .parchmentGradientEnd
+        case .sunset: .sunsetGradientEnd
+        }
+    }
 
-extension MeshGradient {
-    /// Creates a uniform 3x3 mesh gradient from the given colors.
-    static func uniform3x3(colors: [Color]) -> MeshGradient {
-        MeshGradient(
-            width: 3,
-            height: 3,
-            points: [
-                [0.0, 0.0], [0.5, 0.0], [1.0, 0.0],
-                [0.0, 0.5], [0.5, 0.5], [1.0, 0.5],
-                [0.0, 1.0], [0.5, 1.0], [1.0, 1.0],
-            ],
-            colors: colors,
-        )
+    var textColor: Color {
+        switch self {
+        case .midnight: .midnightText
+        case .parchment: .parchmentText
+        case .sunset: .sunsetText
+        }
     }
 }

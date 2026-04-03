@@ -1,4 +1,5 @@
 import CoreGraphics
+import SwiftUI
 
 enum DriftLayout {
     // MARK: - Spacing
@@ -11,7 +12,6 @@ enum DriftLayout {
 
     // MARK: - Corner Radius
 
-    static let cornerRadiusSM: CGFloat = 8
     static let cornerRadiusLG: CGFloat = 16
 
     // MARK: - Card
@@ -28,4 +28,17 @@ enum DriftLayout {
     // MARK: - Watermark
 
     static let watermarkText = "drifting thoughts"
+}
+
+// MARK: - Character Limit
+
+extension View {
+    func characterLimit(_ limit: Int, on value: Binding<String>) -> some View {
+        onChange(of: value.wrappedValue) { _, newValue in
+            let truncated = String(newValue.prefix(limit))
+            if truncated != newValue {
+                value.wrappedValue = truncated
+            }
+        }
+    }
 }

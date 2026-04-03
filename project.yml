@@ -1,165 +1,192 @@
 name: DriftingThoughts
 
-# ============================================
-# VERSION & IDENTITY
-# ============================================
+# MARK: Shared Values
 version: &version 0.1.0
 buildNumber: &buildNumber 1
 bundleId: &bundleId com.vakesz.driftingthought
 teamId: &teamId H8W5DK3FN2
 
-# ============================================
-# PROJECT OPTIONS
-# ============================================
+orientationAll: &orientationAll
+  - UIInterfaceOrientationPortrait
+  - UIInterfaceOrientationPortraitUpsideDown
+  - UIInterfaceOrientationLandscapeLeft
+  - UIInterfaceOrientationLandscapeRight
+
+# MARK: Project Options
 options:
+  minimumXcodeGenVersion: 2.42.0
+  defaultConfig: Debug
+  developmentLanguage: en
   deploymentTarget:
-    iOS: 18.0
-  groupSortPosition: top
+    iOS: "18.0"
   createIntermediateGroups: true
   generateEmptyDirectories: false
+  groupSortPosition: top
+  groupOrdering:
+    - order:
+        - App
+        - Core
+        - Features
+        - Supporting
+        - Resources
+        - Tests
+  useBaseInternationalization: false
 
-# ============================================
-# BUILD CONFIGURATIONS
-# ============================================
+# MARK: Build Configurations
 configs:
   Debug: debug
+  DebugTests: debug
   Release: release
+  TestFlight: release
 
+# MARK: Project Files
 fileGroups:
+  - AGENTS.md
   - .swiftlint.yml
   - .gitignore
   - Makefile
   - project.yml
   - README.md
 
-# ============================================
-# PROJECT-WIDE BUILD SETTINGS
-# ============================================
-settings:
-  base:
-    # Swift Language
-    SWIFT_VERSION: 6.0
-    SWIFT_ENFORCE_EXCLUSIVE_ACCESS: full
-    SWIFT_EMIT_LOC_STRINGS: YES
-    GENERATE_STRING_CATALOG_SWIFT_SYMBOLS: YES
-    STRING_CATALOG_GENERATE_SYMBOLS: YES
+# MARK: Setting Groups
+settingGroups:
+  projectBaseSettings:
+    base:
+      ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
+      CLANG_ANALYZER_LOCALIZABILITY_MISSING_LOCALIZABLE: YES
+      CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED: YES
+      CLANG_ANALYZER_SECURITY_FLOATLOOPCOUNTER: YES
+      CLANG_ANALYZER_SECURITY_INSECUREAPI_UNCHECKEDRETURN: YES
+      CLANG_ENABLE_MODULES: YES
+      CODE_SIGNING_ALLOWED: YES
+      DEAD_CODE_STRIPPING: YES
+      ENABLE_MODULE_VERIFIER: YES
+      ENABLE_PREVIEWS: YES
+      ENABLE_STRICT_OBJC_MSGSEND: YES
+      ENABLE_USER_SCRIPT_SANDBOXING: YES
+      GCC_TREAT_WARNINGS_AS_ERRORS: YES
+      GENERATE_STRING_CATALOG_SWIFT_SYMBOLS: YES
+      LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+      LOCALIZED_STRING_MACRO_NAMES: NSLocalizedString CFCopyLocalizedString String(localized:)
+      LOCALIZED_STRING_SWIFTUI_SUPPORT: YES
+      MODULE_VERIFIER_SUPPORTED_LANGUAGES: "objective-c objective-c++"
+      MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS: "gnu11 gnu++20"
+      STRING_CATALOG_GENERATE_SYMBOLS: YES
+      SWIFT_EMIT_CONST_VALUE: YES
+      SWIFT_EMIT_DOC_COMMENT: YES
+      SWIFT_EMIT_LOC_STRINGS: YES
+      SWIFT_ENABLE_EXPLICIT_MODULES: YES
+      SWIFT_ENFORCE_EXCLUSIVE_ACCESS: full
+      SWIFT_STRICT_CONCURRENCY: complete
+      SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+      SWIFT_VERSION: "6.0"
+      TARGETED_DEVICE_FAMILY: "1,2"
 
-    # Platform & Deployment
-    TARGETED_DEVICE_FAMILY: "1,2"
-
-    # Security
-    ENABLE_USER_SCRIPT_SANDBOXING: YES
-    CODE_SIGNING_ALLOWED: YES
-
-    # Code Quality - Treat Warnings as Errors
-    GCC_TREAT_WARNINGS_AS_ERRORS: YES
-    SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
-
-    # Code Quality - Static Analyzer (beyond defaults)
-    CLANG_ANALYZER_SECURITY_FLOATLOOPCOUNTER: YES
-    CLANG_ANALYZER_SECURITY_INSECUREAPI_UNCHECKEDRETURN: YES
-
-    # Localizability Analysis (Strict)
-    CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED: YES
-    CLANG_ANALYZER_LOCALIZABILITY_MISSING_LOCALIZABLE: YES
-
-    # Build Optimization
-    DEAD_CODE_STRIPPING: YES
-    ENABLE_MODULE_VERIFIER: YES
-    MODULE_VERIFIER_SUPPORTED_LANGUAGES: "objective-c objective-c++"
-    MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS: "gnu11 gnu++20"
-
-    # Modern Xcode Features
-    ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
-    ENABLE_PREVIEWS: YES
-
-    # Modern Localization
-    LOCALIZED_STRING_MACRO_NAMES: NSLocalizedString CFCopyLocalizedString String(localized:)
-    LOCALIZED_STRING_SWIFTUI_SUPPORT: YES
-    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
-
-    # Additional Modern Settings (iOS 18 / Xcode 16)
-    SWIFT_EMIT_CONST_VALUE: YES
-    SWIFT_EMIT_DOC_COMMENT: YES
-    CLANG_ENABLE_MODULES: YES
-    ENABLE_STRICT_OBJC_MSGSEND: YES
-
-  configs:
-    Debug:
-      ONLY_ACTIVE_ARCH: YES
-      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+  debugBuildSettings:
+    base:
+      COPY_PHASE_STRIP: NO
+      DEBUG_INFORMATION_FORMAT: dwarf
+      DEPLOYMENT_POSTPROCESSING: NO
+      EAGER_LINKING: YES
+      ENABLE_DEBUG_DYLIB: YES
       ENABLE_TESTABILITY: YES
+      GCC_OPTIMIZATION_LEVEL: "0"
+      GCC_UNROLL_LOOPS: NO
+      ONLY_ACTIVE_ARCH: YES
+      STRIP_INSTALLED_PRODUCT: NO
       SWIFT_COMPILATION_MODE: singlefile
       SWIFT_OPTIMIZATION_LEVEL: "-Onone"
-      DEBUG_INFORMATION_FORMAT: dwarf
-      GCC_OPTIMIZATION_LEVEL: "0"
-      COPY_PHASE_STRIP: NO
-      STRIP_INSTALLED_PRODUCT: NO
-      DEPLOYMENT_POSTPROCESSING: NO
 
-    Release:
-      ONLY_ACTIVE_ARCH: NO
-      SWIFT_COMPILATION_MODE: wholemodule
-      SWIFT_OPTIMIZATION_LEVEL: "-O"
-      GCC_OPTIMIZATION_LEVEL: "s"
-      LLVM_LTO: monolithic
-      DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
-      DWARF_DSYM_FOLDER_PATH: "$(CONFIGURATION_BUILD_DIR)"
-      GCC_GENERATE_DEBUGGING_SYMBOLS: YES
+  releaseBuildSettings:
+    base:
+      ASSETCATALOG_COMPILER_OPTIMIZATION: "time"
       COPY_PHASE_STRIP: YES
+      DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+      DEPLOYMENT_POSTPROCESSING: YES
+      DWARF_DSYM_FOLDER_PATH: "$(CONFIGURATION_BUILD_DIR)"
+      GCC_FAST_MATH: NO
+      GCC_GENERATE_DEBUGGING_SYMBOLS: YES
+      GCC_OPTIMIZATION_LEVEL: "s"
+      GCC_UNROLL_LOOPS: YES
+      LLVM_LTO: monolithic
+      ONLY_ACTIVE_ARCH: NO
+      SEPARATE_STRIP: YES
       STRIP_INSTALLED_PRODUCT: YES
       STRIP_STYLE: "all"
       STRIP_SWIFT_SYMBOLS: YES
-      DEPLOYMENT_POSTPROCESSING: YES
-      SEPARATE_STRIP: YES
-      GCC_UNROLL_LOOPS: YES
-      GCC_FAST_MATH: NO
-      ASSETCATALOG_COMPILER_OPTIMIZATION: "time"
+      SWIFT_COMPILATION_MODE: wholemodule
+      SWIFT_OPTIMIZATION_LEVEL: "-O"
       VALIDATE_PRODUCT: YES
 
-# ============================================
-# TARGETS
-# ============================================
+  appTargetSettings:
+    base:
+      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS: YES
+      ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
+      ASSETCATALOG_COMPILER_STANDALONE_ICON_BEHAVIOR: all
+      CODE_SIGN_IDENTITY: "Apple Development"
+      CODE_SIGN_STYLE: Automatic
+      CURRENT_PROJECT_VERSION: *buildNumber
+      DEVELOPMENT_TEAM: *teamId
+      GENERATE_ASSET_SYMBOLS: YES
+      GENERATE_INFOPLIST_FILE: NO
+      INSTALL_PATH: "$(LOCAL_APPS_DIR)"
+      MARKETING_VERSION: *version
+      PRODUCT_BUNDLE_IDENTIFIER: *bundleId
+      PRODUCT_NAME: DriftingThoughts
+      SKIP_INSTALL: NO
+      SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: YES
+
+  testTargetSettings:
+    base:
+      BUNDLE_LOADER: "$(TEST_HOST)"
+      CODE_SIGNING_ALLOWED: NO
+      ENABLE_TESTING_SEARCH_PATHS: YES
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: TESTING
+      TEST_HOST: "$(BUILT_PRODUCTS_DIR)/DriftingThoughts.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/DriftingThoughts"
+
+# MARK: Project Settings
+settings:
+  groups:
+    - projectBaseSettings
+  configs:
+    Debug:
+      groups:
+        - debugBuildSettings
+      base:
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
+
+    DebugTests:
+      groups:
+        - debugBuildSettings
+      base:
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG TESTING
+
+    Release:
+      groups:
+        - releaseBuildSettings
+
+    TestFlight:
+      groups:
+        - releaseBuildSettings
+
+# MARK: Targets
 targets:
-  # ==========================================
-  # MAIN APPLICATION TARGET
-  # ==========================================
   DriftingThoughts:
     type: application
     platform: iOS
-
     sources:
       - path: App
       - path: Core
       - path: Features
       - path: Resources
       - path: Supporting
-
+    resources:
+      - path: Supporting/Localizable.xcstrings
+        buildPhase: resources
     settings:
-      base:
-        # Product Identity
-        PRODUCT_NAME: DriftingThoughts
-        PRODUCT_BUNDLE_IDENTIFIER: *bundleId
-        MARKETING_VERSION: *version
-        CURRENT_PROJECT_VERSION: *buildNumber
-
-        # Code Signing
-        DEVELOPMENT_TEAM: *teamId
-        CODE_SIGN_STYLE: Automatic
-        CODE_SIGN_IDENTITY: "Apple Development"
-
-        # Asset Catalog
-        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
-        ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS: YES
-        ASSETCATALOG_COMPILER_STANDALONE_ICON_BEHAVIOR: all
-        GENERATE_ASSET_SYMBOLS: YES
-
-        # Distribution
-        SKIP_INSTALL: NO
-        INSTALL_PATH: "$(LOCAL_APPS_DIR)"
-        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: YES
-
+      groups:
+        - appTargetSettings
     info:
       path: Supporting/Info.plist
       properties:
@@ -168,8 +195,38 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
-        UISupportedInterfaceOrientations:
-          - UIInterfaceOrientationPortrait
-          - UIInterfaceOrientationPortraitUpsideDown
-          - UIInterfaceOrientationLandscapeLeft
-          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations: *orientationAll
+
+  # MARK: Tests
+  DriftingThoughtsTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - Tests
+    dependencies:
+      - target: DriftingThoughts
+    settings:
+      groups:
+        - testTargetSettings
+
+# MARK: Schemes
+schemes:
+  DriftingThoughts:
+    management:
+      shared: true
+    build:
+      targets:
+        DriftingThoughts: all
+    run:
+      config: Debug
+    test:
+      config: DebugTests
+      macroExpansion: DriftingThoughts
+      targets:
+        - DriftingThoughtsTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

@@ -1,18 +1,17 @@
 import SwiftUI
 
 struct OnboardingView: View {
-    @Bindable private var settings = AppSettings.shared
-    @State private var draftAuthorName = AppSettings.shared.authorName
+    @Environment(AppSettings.self) private var settings
+    @State private var draftAuthorName = ""
 
     var body: some View {
+        @Bindable var settings = settings
         NavigationStack {
             Form {
                 Section("Profile") {
                     TextField("Your name (optional)", text: $draftAuthorName)
                         .textInputAutocapitalization(.words)
-                        .onChange(of: draftAuthorName) { _, newValue in
-                            draftAuthorName = String(newValue.prefix(DriftLayout.authorNameCharacterLimit))
-                        }
+                        .characterLimit(DriftLayout.authorNameCharacterLimit, on: $draftAuthorName)
 
                     Toggle("Show author on cards", isOn: $settings.showAuthorOnCard)
                 }
@@ -26,6 +25,7 @@ struct OnboardingView: View {
                 }
             }
             .navigationTitle("Welcome")
+            .onAppear { draftAuthorName = settings.authorName }
         }
     }
 }

@@ -3,80 +3,50 @@ import SwiftUI
 
 struct SettingsView: View {
     @Query private var allThoughts: [Thought]
-    @Bindable private var settings = AppSettings.shared
+    @Environment(AppSettings.self) private var settings
 
     var body: some View {
+        @Bindable var settings = settings
         Form {
-            profileSection
-            cardsSection
-            streakSection
-            dataSection
-            aboutSection
+            Section("Profile") {
+                TextField("Author name", text: $settings.authorName)
+                    .textInputAutocapitalization(.words)
+                    .characterLimit(DriftLayout.authorNameCharacterLimit, on: $settings.authorName)
+
+                Toggle("Show author on cards", isOn: $settings.showAuthorOnCard)
+            }
+
+            Section("Cards") {
+                Toggle("Show watermark", isOn: $settings.showWatermark)
+            }
+
+            Section("Streak") {
+                Picker("Frequency", selection: $settings.streakFrequency) {
+                    ForEach(StreakFrequency.allCases) { frequency in
+                        Text(frequency.label).tag(frequency)
+                    }
+                }
+            }
+
+            Section("Data") {
+                HStack {
+                    Text("Total thoughts")
+                    Spacer()
+                    Text(verbatim: "\(allThoughts.count)")
+                        .foregroundStyle(Color.textSecondary)
+                }
+            }
+
+            Section("About") {
+                HStack {
+                    Text("Version")
+                    Spacer()
+                    Text(verbatim: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0")
+                        .foregroundStyle(Color.textSecondary)
+                }
+            }
         }
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.inline)
-    }
-
-    // MARK: - Profile
-
-    private var profileSection: some View {
-        Section("Profile") {
-            TextField("Author name", text: $settings.authorName)
-                .textInputAutocapitalization(.words)
-                .onChange(of: settings.authorName) { _, newValue in
-                    let truncated = String(newValue.prefix(DriftLayout.authorNameCharacterLimit))
-                    if truncated != newValue {
-                        settings.authorName = truncated
-                    }
-                }
-
-            Toggle("Show author on cards", isOn: $settings.showAuthorOnCard)
-        }
-    }
-
-    // MARK: - Cards
-
-    private var cardsSection: some View {
-        Section("Cards") {
-            Toggle("Show watermark", isOn: $settings.showWatermark)
-        }
-    }
-
-    // MARK: - Streak
-
-    private var streakSection: some View {
-        Section("Streak") {
-            Picker("Frequency", selection: $settings.streakFrequency) {
-                ForEach(StreakFrequency.allCases) { frequency in
-                    Text(frequency.label).tag(frequency)
-                }
-            }
-        }
-    }
-
-    // MARK: - Data
-
-    private var dataSection: some View {
-        Section("Data") {
-            HStack {
-                Text("Total thoughts")
-                Spacer()
-                Text("\(allThoughts.count)")
-                    .foregroundStyle(Color.textSecondary)
-            }
-        }
-    }
-
-    // MARK: - About
-
-    private var aboutSection: some View {
-        Section("About") {
-            HStack {
-                Text("Version")
-                Spacer()
-                Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0")
-                    .foregroundStyle(Color.textSecondary)
-            }
-        }
     }
 }

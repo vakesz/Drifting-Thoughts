@@ -3,7 +3,7 @@ import SwiftUI
 struct CardDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Bindable private var settings = AppSettings.shared
+    @Environment(AppSettings.self) private var settings
     @State private var viewModel: CardDetailViewModel
     @State private var saveFeedbackTrigger = false
     @State private var shareImageURL: URL?
@@ -37,7 +37,7 @@ struct CardDetailView: View {
                     ShareLink(item: shareImageURL) {
                         Image(systemName: "square.and.arrow.up")
                     }
-                    .accessibilityLabel("Share image")
+                    .accessibilityLabel("accessibility.share_image")
                 }
 
                 if isComposePreview {

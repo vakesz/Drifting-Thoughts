@@ -3,6 +3,7 @@ included:
   - App
   - Core
   - Features
+  - Tests
 
 excluded:
   - Supporting

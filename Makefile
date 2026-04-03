@@ -50,7 +50,7 @@ define build_target
 	fi
 endef
 
-.PHONY: help open generate generate-sourcekit check-sourcekit build build-release clean clean-all lint format format-lint
+.PHONY: help open generate generate-sourcekit check-sourcekit build build-release build-testflight test clean clean-all lint format
 
 help:
 	@echo "Drifting Thoughts iOS — Available Commands:"
@@ -62,13 +62,14 @@ help:
 	@echo "  make check-sourcekit    - Check if SourceKit-LSP configuration is valid"
 	@echo "  make build              - Generate Xcode project and build"
 	@echo "  make build-release      - Generate Xcode project and build (Release)"
+	@echo "  make build-testflight   - Generate Xcode project and build (TestFlight)"
+	@echo "  make test               - Generate Xcode project and run tests"
 	@echo "  make clean              - Clean build artifacts (keeps .xcodeproj)"
 	@echo "  make clean-all          - Full clean including generated project"
 	@echo ""
 	@echo "Code Quality:"
 	@echo "  make lint               - Run SwiftLint on all files (check only)"
 	@echo "  make format             - Auto-fix Swift code with SwiftLint --fix"
-	@echo "  make format-lint        - Format code then run SwiftLint"
 	@echo ""
 
 # ==============================================================================
@@ -130,9 +131,6 @@ format:
 	fi; \
 	echo "${GREEN}═══════════════════════════════════════════════════${NC}"
 
-format-lint: format lint
-	@echo "${GREEN}✔ Format and lint completed${NC}"
-
 # ==============================================================================
 # BUILD
 # ==============================================================================
@@ -192,6 +190,34 @@ build: generate
 
 build-release: generate
 	$(call build_target,Release,Build Release)
+
+build-testflight: generate
+	$(call build_target,TestFlight,Build TestFlight)
+
+test: generate
+	@echo "${BLUE}▶ Running tests — started${NC}"
+	@TEST_LOG=$$(mktemp); \
+	SIMULATOR=$$(xcrun simctl list devices available -j \
+		| python3 -c "import sys,json; devs=json.load(sys.stdin)['devices']; print(next(d['udid'] for r,ds in devs.items() if 'iOS' in r for d in ds if d['isAvailable'] and 'iPhone' in d['name']))" 2>/dev/null || echo ""); \
+	if [ -z "$$SIMULATOR" ]; then \
+		echo "${RED}✖ No available iPhone simulator found${NC}"; \
+		exit 1; \
+	fi; \
+	set -o pipefail && xcodebuild -scheme DriftingThoughts -configuration DebugTests \
+		-destination "platform=iOS Simulator,id=$$SIMULATOR" test 2>&1 | tee $$TEST_LOG | xcbeautify; \
+	status=$$?; \
+	rm -f $$TEST_LOG; \
+	echo ""; \
+	if [ $$status -eq 0 ]; then \
+		echo "${GREEN}═══════════════════════════════════════════════════${NC}"; \
+		echo "${GREEN}✔ TESTS PASSED${NC}"; \
+		echo "${GREEN}═══════════════════════════════════════════════════${NC}"; \
+	else \
+		echo "${RED}═══════════════════════════════════════════════════${NC}"; \
+		echo "${RED}✖ TESTS FAILED${NC}"; \
+		echo "${RED}═══════════════════════════════════════════════════${NC}"; \
+		exit $$status; \
+	fi
 
 # ==============================================================================
 # CLEAN

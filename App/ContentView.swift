@@ -2,7 +2,7 @@ import SwiftData
 import SwiftUI
 
 struct ContentView: View {
-    @Bindable private var settings = AppSettings.shared
+    @Environment(AppSettings.self) private var settings
     @Query(sort: \Thought.createdAt, order: .reverse) private var thoughts: [Thought]
     @State private var searchText = ""
 
